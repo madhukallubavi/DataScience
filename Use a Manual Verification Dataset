@@ -1,0 +1,62 @@
+
+Use a Manual Verification Dataset:
+
+Keras also allows to manually specify the dataset to use for validation during training.
+In this example, we use the handy train test split() function from the Python scikit-learn
+machine learning library to separate our data into a training and test dataset. We use 67%
+for training and the remaining 33% of the data for validation. The validation dataset can be
+specified to the fit() function in Keras by the validation data argument. It takes a tuple of
+the input and output datasets.
+
+#MLP with manual validation set
+from keras.models import Sequential
+from keras.layers import Dense
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+
+#fix random seed for reproducibility
+seed=7
+np.random.seed(seed)
+
+#load diabetes dataset
+data = pd.read_csv('diabetes.csv')
+array = data.values
+
+#split into input(X) and output(Y) variables
+X = array[:,0:8]
+Y = array[:,8]
+
+#split into 67% for train and 33% for test
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=seed)
+
+#create model
+model=Sequential()
+model.add(Dense(12, input_dim=8, activation='relu'))
+model.add(Dense(8, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+
+#compile model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+#fit model
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=150, batch_size=10)
+
+# evaluate the model
+scores = model.evaluate(X, Y)
+print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+
+
+Results:
+Epoch 148/150
+514/514 [==============================] - 0s 499us/step - loss: 5.5190 - acc: 0.6576 - val_loss: 5.8381 - val_acc: 0.6378
+Epoch 149/150
+514/514 [==============================] - 0s 507us/step - loss: 5.5190 - acc: 0.6576 - val_loss: 5.8381 - val_acc: 0.6378
+Epoch 150/150
+514/514 [==============================] - 0s 573us/step - loss: 5.5190 - acc: 0.6576 - val_loss: 5.8381 - val_acc: 0.6378
+768/768 [==============================] - 0s 55us/step
+
+acc: 65.10%
+
+Like before, running the example provides verbose output of training that includes the loss
+and accuracy of the model on both the training and validation datasets for each epoch.

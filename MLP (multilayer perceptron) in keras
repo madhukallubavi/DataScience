@@ -1,0 +1,59 @@
+In this lesson we discovered how to create your neural network model using the powerful
+Keras Python library for deep learning. Specifically you learned the five key steps in using
+Keras to create a neural network or deep learning model, step-by-step including:
+ How to load data.
+ How to define a neural network model in Keras.
+ How to compile a Keras model using the efficient numerical backend.
+ How to train a model on data.
+ How to evaluate a model on data.
+
+
+#MLP (multilayer perceptron) in keras
+from keras.models import Sequential
+from keras.layers import Dense
+import numpy as np
+import pandas as pd
+
+#fix random seed for reproducibility
+np.random.seed(7)
+
+#load diabetes dataset
+data = pd.read_csv('diabetes.csv')
+array = data.values
+
+#split into input (X) & output (Y) variables 
+X = array[:,0:8]
+Y = array[:,8]
+
+#create model
+model = Sequential()
+model.add(Dense(12, input_dim=8, activation='relu'))
+model.add(Dense(8, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+
+#compile model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+#fit model
+model.fit(X, Y, epochs=150, batch_size=10)
+
+#evaluate model
+scores = model.evaluate(X, Y)
+print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+
+
+Results:
+Epoch 148/150
+768/768 [==============================] - 0s 296us/step - loss: 0.4719 - acc: 0.7695
+Epoch 149/150
+768/768 [==============================] - 0s 294us/step - loss: 0.4766 - acc: 0.7604
+Epoch 150/150
+768/768 [==============================] - 0s 317us/step - loss: 0.4747 - acc: 0.7708
+768/768 [==============================] - 0s 212us/step
+
+acc: 79.69%
+
+Running this example, we see a message for each of the 150 epochs printing the loss
+and accuracy for each, followed by the final evaluation of the trained model on the training
+dataset. It takes about 10 seconds to execute on my workstation running on the CPU with a
+Theano backend.

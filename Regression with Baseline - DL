@@ -1,0 +1,43 @@
+#Regression Example with boston dataset: Baseline
+import numpy as np
+import pandas as pd
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import KFold
+
+#load boston dataset
+data = pd.read_csv('boston.csv')
+array = data.values
+
+#split into input(X) and output(Y)
+X = array[:,0:13]
+Y = array[:,13]
+
+#define base model
+def baseline_model():
+  #create model
+  model = Sequential()
+  model.add(Dense(13, input_dim=13, kernel_initializer='normal', activation='relu'))
+  model.add(Dense(1, kernel_initializer='normal'))
+  #compile model
+  model.compile(loss='mean_squared_error', optimizer='adam')
+  return model
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#evaluate model
+estimator = KerasRegressor(build_fn=baseline_model, epochs=100, batch_size=5, verbose=0)
+kfold = KFold(n_splits=10, random_state=seed)
+results = cross_val_score(estimator, X, Y, cv=kfold)
+print("Baseline: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+
+Results:
+Baseline: -33.40 (21.40) MSE
+
+Running this code gives us an estimate of the model's performance on the problem for unseen
+data. The result reports the mean squared error including the average and standard deviation
+(average variance) across all 10 folds of the cross-validation evaluation.

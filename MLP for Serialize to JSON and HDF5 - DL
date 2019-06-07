@@ -1,0 +1,85 @@
+JSON is a simple file format for describing data hierarchically. Keras provides the ability to
+describe any model using JSON format with a to json() function. This can be saved to file
+and later loaded via the model from json() function that will create a new model from the
+JSON specification.
+The weights are saved directly from the model using the save weights() function and
+later loaded using the symmetrical load weights() function. The example below trains and
+evaluates a simple model on the Pima Indians dataset. The model structure is then converted
+to JSON format and written to model.json in the local directory. The network weights are
+written to model.h5 in the local directory.
+The model and weight data is loaded from the saved files and a new model is created. It is
+important to compile the loaded model before it is used. This is so that predictions made using
+the model can use the appropriate efficient computation from the Keras backend. The model is
+evaluated in the same way printing the same evaluation score.
+
+#MLP for diabetes dataset Serialize to JSON and HDF5
+import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.models import model_from_json
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load diabetes dataset
+data = pd.read_csv('diabetes.csv')
+array = data.values
+
+#split into input(X) and output(Y) variables
+X = array[:,0:8]
+Y = array[:,8]
+
+#create model
+model = Sequential()
+model.add(Dense(12, input_dim=8, kernel_initializer='normal', activation='relu'))
+model.add(Dense(8, kernel_initializer='normal', activation='relu'))
+model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
+
+#compile model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+#fit model
+model.fit(X,Y, epochs=150, batch_size=10, verbose=0)
+
+#evaluate model
+scores = model.evaluate(X, Y, verbose=0)
+print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+
+
+#serialize model to JSON
+model_json = model.to_json()
+with open('model.json', 'w') as json_file:
+    json_file.write(model_json)
+
+#serialize weights to HDF5
+model.save_weights('model.h5')
+print("Saved model to disk")
+
+#later .....
+
+#load json and create model
+json_file = open('model.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+loaded_model = model_from_json(loaded_model_json)
+
+#load weights into new model
+loaded_model.load_weights('model.h5')
+print('Loaded model from disk')
+
+#evaluate loaded model on test data
+loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+score = loaded_model.evaluate(X, Y, verbose=0)
+print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
+
+Results:
+acc: 79.17%
+Saved model to disk
+Loaded model from disk
+acc: 79.17%
+
+Running this example provides the output below. It shows first the accuracy of the trained
+model, the saving of the model to disk in JSON format, the loading of the model and finally the
+re-evaluation of the loaded model achieving the same accuracy.

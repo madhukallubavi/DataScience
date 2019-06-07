@@ -44,5 +44,5 @@ print('Baseline: %.2f%% (%.2f%%)' % (results.mean()*100, results.std()*100))
 Results:
 Baseline: 81.20% (9.09%)
 
-Running this example provides the results above. We do see a small but very nice lift in the
-mean accuracy.
+Running this code produces the following output showing the mean and standard deviation
+of the estimated accuracy of the model on unseen data.

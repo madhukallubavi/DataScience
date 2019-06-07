@@ -1,0 +1,68 @@
+Evaluate a Smaller Network:
+I suspect that there is a lot of redundancy in the input variables for this problem. The data
+describes the same signal from different angles. Perhaps some of those angles are more relevant
+than others. We can force a type of feature extraction by the network by restricting the
+representational space in the first hidden layer.
+
+In this experiment we take our baseline model with 60 neurons in the hidden layer and
+reduce it by half to 30. This will put pressure on the network during training to pick out the
+most important structure in the input data to model. We will also standardize the data as in
+the previous experiment with data preparation and try to take advantage of the small lift in
+performance.
+
+#Binary Classification with sonar dataset: Standardized Smaller
+import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load sonar dataset
+data = pd.read_csv('sonar.all-data.csv')
+array = data.values
+
+#split into input(X) and output(Y)
+X = array[:,0:60].astype(float)
+Y = array[:,60]
+
+#encode class values as integers
+encoder = LabelEncoder()
+encoder.fit(Y)
+encoded_Y = encoder.transform(Y)
+
+#baseline model
+def create_smaller():
+  #create model
+  model = Sequential()
+  model.add(Dense(60, input_dim=60, kernel_initializer='normal', activation='relu'))
+  model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
+  #complie model
+  model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+  return model
+
+#evaluate baseline model with standardized dataset
+estimators = []
+estimators.append(('standardize', StandardScaler()))
+estimators.append(('mlp', KerasClassifier(build_fn=create_smaller, epochs=100, batch_size=5, verbose=0)))
+pipeline = Pipeline(estimators)
+kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+results = cross_val_score(pipeline, X, encoded_Y, cv=kfold)
+print('Smaller: %.2f%% (%.2f%%)' % (results.mean()*100, results.std()*100))
+
+
+Results:
+Smaller: 84.63% (6.58%)
+
+Running this example provides the following result. We can see that we have a very slight
+boost in the mean estimated accuracy and an important reduction in the standard deviation
+(average spread) of the accuracy scores for the model. This is a great result because we are
+doing slightly better with a network half the size, which in turn takes half the time to train.

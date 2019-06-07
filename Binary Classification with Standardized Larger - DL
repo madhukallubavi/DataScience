@@ -1,0 +1,60 @@
+A neural network topology with more layers offers more opportunity for the network to extract
+key features and recombine them in useful nonlinear ways. We can evaluate whether adding
+more layers to the network improves the performance easily by making another small tweak to
+the function used to create our model. Here, we add one new layer (one line) to the network
+that introduces another hidden layer with 30 neurons after the first hidden layer. Our network
+now has the topology:
+60 inputs -> [60 -> 30] -> 1 output
+
+#Binary Classification with sonar dataset: Standardized Larger
+import numpy as np
+import pandas as pd
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+from sklearn.pipeline import Pipeline
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load sonar dataset
+data = pd.read_csv('sonar.all-data.csv')
+array = data.values
+
+#split into input(X) and output(Y)
+X = array[:,0:60]
+Y = array[:,60]
+
+#encode class values as integers
+encoder = LabelEncoder()
+encoder.fit(Y)
+encoded_Y = encoder.transform(Y)
+
+#larger model
+def create_larger():
+  #create model
+  model = Sequential()
+  model.add(Dense(60, input_dim=60, kernel_initializer='normal', activation='relu'))
+  model.add(Dense(30, kernel_initializer='normal', activation='relu'))
+  model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
+  #compile model
+  model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+  return model
+estimators = []
+estimators.append(('standardize', StandardScaler()))
+estimators.append(('mlp', KerasClassifier(build_fn=create_larger, epochs=100, batch_size=5, verbose=0)))
+pipeline = Pipeline(estimators)
+kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+results = cross_val_score(pipeline, X, encoded_Y, cv=kfold)
+print("Larger: %.2f%% (%.2f%%)" % (results.mean()*100, results.std()*100))
+
+Results:
+Larger: 84.58% (6.33%)
+
+Running this example produces the results above. We can see that we do not get a lift in
+the model performance. This may be statistical noise or a sign that further training is needed.

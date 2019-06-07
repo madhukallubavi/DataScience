@@ -1,0 +1,48 @@
+#Regression with Boston Dataset: Standardized Larger
+import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load boston dataset
+data = pd.read_csv('boston.csv')
+array = data.values
+
+#split into input(X) and output(Y)
+X = array[:,0:13]
+Y = array[:,13]
+
+#define model
+def larger_model():
+  # create model
+  model = Sequential()
+  model.add(Dense(13, input_dim=13, kernel_initializer='normal', activation='relu'))
+  model.add(Dense(6, kernel_initializer='normal', activation='relu'))
+  model.add(Dense(1, kernel_initializer='normal'))
+  # Compile model
+  model.compile(loss='mean_squared_error', optimizer='adam')
+  return model
+
+# evaluate model with standardized dataset
+estimators = []
+estimators.append(('standardize', StandardScaler()))
+estimators.append(('mlp', KerasRegressor(build_fn=larger_model, epochs=50, batch_size=5,
+verbose=0)))
+pipeline = Pipeline(estimators)
+kfold = KFold(n_splits=10, random_state=seed)
+results = cross_val_score(pipeline, X, Y, cv=kfold)
+print("Larger: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+
+Results:
+Larger: -23.91 (27.95) MSE
+
+Running this model does show a further improvement in MSE performance.

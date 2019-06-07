@@ -1,0 +1,55 @@
+Another approach to increasing the representational capacity of the model is to create a wider
+network. In this section we evaluate the effect of keeping a shallow network architecture and
+nearly doubling the number of neurons in the one hidden layer. Again, all we need to do is define
+a new function that creates our neural network model. Here, we have increased the number of
+neurons in the hidden layer compared to the baseline model from 13 to 20. The topology for
+our wider network can be summarized as follows:
+13 inputs -> [20] -> 1 output
+
+#Regression Example With Boston Dataset: Standardized and Wider
+import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load boston dataset
+data = pd.read_csv('boston.csv')
+array = data.values
+
+#split into input(X) and output(Y)
+X = array[:,0:13]
+Y = array[:,13]
+
+#define wider model
+def wider_model():
+  #create model
+  model = Sequential()
+  model.add(Dense(20, input_dim=13, kernel_initializer='normal', activation='relu'))
+  model.add(Dense(1, kernel_initializer='normal'))
+  #compile model
+  model.compile(loss='mean_squared_error', optimizer='adam')
+  return model
+
+#evaluate model with standardized dataset
+estimators = []
+estimators.append(('standardize', StandardScaler()))
+estimators.append(('mlp', KerasRegressor(build_fn=wider_model, epochs=100, batch_size=5, verbose=0)))
+pipeline = Pipeline(estimators)
+kfold = KFold(n_splits=10, random_state=seed)
+results = cross_val_score(pipeline, X, Y, cv=kfold)
+print("Wider: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+
+Results:
+Wider: -21.67 (23.61) MSE
+
+Building the model does see a further drop in error to about 21 thousand squared dollars.
+This is not a bad result for this problem.

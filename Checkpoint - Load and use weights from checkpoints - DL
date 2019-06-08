@@ -1,0 +1,47 @@
+Now that we have seen how to checkpoint deep learning models during training, we need
+to review how to load and use a checkpointed model. The checkpoint only includes the model
+weights. It assumes we know the network structure. This too can be serialized to file in JSON
+or YAML format. In the example below, the model structure is known and the best weights are
+loaded from the previous experiment, stored in the working directory in the weights.best.hdf5
+file. The model is then used to make predictions on the entire dataset.
+
+#How to load and use weights from a checkpoints
+import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load diabetes dataset
+data = pd.read_csv('diabetes.csv', delimiter=',')
+array = data.values
+
+#split into input(X) and output(Y) variables
+X = array[:,0:8]
+Y = array[:,8]
+
+#create model
+model = Sequential()
+model.add(Dense(12, input_dim=8, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(8, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(1, kernel_initializer='uniform', activation='sigmoid'))
+
+#compile model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+#load weights
+model.load_weights('weights.best.hdf5')
+print('Created model and loaded weights from file')
+
+#etimate accuracy on whole dataset using loaded weights
+scores = model.evaluate(X, Y, verbose=0)
+print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+
+Results:
+Created model and loaded weights from file
+acc: 77.60%
+
+Running the example produces the output From Loading and Evaluating a Model Checkpoint.

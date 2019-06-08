@@ -1,0 +1,73 @@
+Dropout can be applied to input neurons called the visible layer. In the example below we add a
+new Dropout layer between the input (or visible layer) and the first hidden layer. The dropout
+rate is set to 20%, meaning one in five inputs will be randomly excluded from each update cycle.
+
+Additionally, as recommended in the original paper on dropout, a constraint is imposed on
+the weights for each hidden layer, ensuring that the maximum norm of the weights does not
+exceed a value of 3. This is done by setting the kernel constraint argument on the Dense
+class when constructing the layers. The learning rate was lifted by one order of magnitude and
+the momentum was increased to 0.9. These increases in the learning rate were also recommended
+in the original dropout paper.
+
+#Dropout on Sonar Dataset: Visible Layer
+import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.wrappers.scikit_learn import KerasClassifier
+from keras.layers import Dropout
+from keras.constraints import maxnorm
+from keras.optimizers import SGD
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+from sklearn.pipeline import Pipeline
+
+#fix random seed for reproducibility
+seed = 7
+np.random.seed(seed)
+
+#load sonar dataset
+data = pd.read_csv('sonar.all-data.csv', header=None)
+array = data.values
+
+#split into input(X) and output(Y) variables
+X = array[:,0:60].astype(float)
+Y = array[:,60]
+
+# encode class values as integers
+encoder = LabelEncoder()
+encoder.fit(Y)
+encoded_Y = encoder.transform(Y)
+
+#dropout in the input layer with weight constraint
+def create_model():
+  # create model
+  model = Sequential()
+  model.add(Dropout(0.2, input_shape=(60,)))
+  model.add(Dense(60, kernel_initializer='normal', activation='relu',
+                  kernel_constraint=maxnorm(3)))
+  model.add(Dense(30, kernel_initializer='normal', activation='relu',
+                  kernel_constraint=maxnorm(3)))
+  model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
+  # Compile model
+  sgd = SGD(lr=0.1, momentum=0.9, decay=0.0, nesterov=False)
+  model.compile(loss='binary_crossentropy', optimizer=sgd, metrics=['accuracy'])
+  return model
+
+np.random.seed(seed)
+estimators = []
+estimators.append(('standardize', StandardScaler()))
+estimators.append(('mlp', KerasClassifier(build_fn=create_model, epochs=300, batch_size=16,
+verbose=0)))
+pipeline = Pipeline(estimators)
+kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+results = cross_val_score(pipeline, X, encoded_Y, cv=kfold)
+print("Visible: %.2f%% (%.2f%%)" % (results.mean()*100, results.std()*100))
+
+Results:
+Visible: 83.16% (3.88%)
+
+Running the example provides a small drop in classification accuracy, at least on a single
+test run.

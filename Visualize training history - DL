@@ -1,0 +1,71 @@
+We can create plots from the collected history data. In the example below we create a
+small network to model the diabetes binary classification problem. The example collects
+the history, returned from training the model and creates two charts:
+1. A plot of accuracy on the training and validation datasets over training epochs.
+2. A plot of loss on the training and validation datasets over training epochs.
+
+#Visualize training history
+import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+import matplotlib.pyplot as plt
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load diabetes dataset
+data = pd.read_csv('diabetes.csv', delimiter=',')
+array = data.values
+
+#split into input(X) and output(Y) variables
+X = array[:,0:8]
+Y = array[:,8]
+
+#create model
+model = Sequential()
+model.add(Dense(12, input_dim=8, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(8, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(1, kernel_initializer='uniform', activation='sigmoid'))
+
+#compile model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+#fit model
+history = model.fit(X, Y, validation_split=0.33, epochs=150, batch_size=10, verbose=0)
+
+#list all data in history
+print(history.history.keys())
+
+#summarize history of accuracy
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epochs')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
+#summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
+Results:
+dict_keys(['val_loss', 'val_acc', 'loss', 'acc'])
+
+The history for the validation dataset is labeled test by convention as it is indeed a test 
+dataset for the model. From the plot of accuracy we can see that the model could probably be
+trained a little more as the trend for accuracy on both datasets is still rising for the last 
+few epochs. We can also see that the model has not yet over-learned the training dataset, showing 
+comparable skill on both datasets.
+
+From the plot of loss, we can see that the model has comparable performance on both train
+and validation datasets (labeled test). If these parallel plots start to depart consistently, it
+might be a sign to stop training at an earlier epoch.
+

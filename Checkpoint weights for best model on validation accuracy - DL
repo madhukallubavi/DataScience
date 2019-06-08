@@ -1,0 +1,57 @@
+A simpler checkpoint strategy is to save the model weights to the same file, if and only if the
+validation accuracy improves. This can be done easily using the same code and changing the output
+filename to be fixed (not include score or epoch information). In this case, model weights are
+written to the file weights.best.hdf5 only if the classification accuracy of the model on the
+validation dataset improves over the best seen so far.
+
+#checkpoint the weights for best model on validation accuracy
+import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.callbacks import ModelCheckpoint
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load diabetes dataset
+data = pd.read_csv('diabetes.csv')
+array = data.values
+
+#split into input(X) and output(Y)
+X = array[:,0:8]
+Y = array[:,8]
+
+#create model
+model = Sequential()
+model.add(Dense(12, input_dim=8, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(8, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(1, kernel_initializer='uniform', activation='sigmoid'))
+
+#compile model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+#checkpoint
+filepath = 'weights.best.hdf5'
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+callbacks_list = [checkpoint]
+
+#fit model
+model.fit(X, Y, validation_split=0.33, epochs=150, batch_size=10, callbacks=callbacks_list, verbose=0)
+
+Results:
+Epoch 00139: val_acc improved from 0.77559 to 0.78346, saving model to weights.best.hdf5
+
+Epoch 00140: val_acc improved from 0.78346 to 0.78346, saving model to weights.best.hdf5
+
+Epoch 00141: val_acc did not improve from 0.78346
+
+Epoch 00142: val_acc did not improve from 0.78346
+
+Epoch 00143: val_acc did not improve from 0.78346
+
+Epoch 00144: val_acc improved from 0.78346 to 0.78740, saving model to weights.best.hdf5
+
+
+Running this example provides the following output (truncated for brevity):

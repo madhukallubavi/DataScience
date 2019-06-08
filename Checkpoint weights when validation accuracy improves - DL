@@ -1,0 +1,61 @@
+A good use of checkpointing is to output the model weights each time an improvement is
+observed during training. The example below creates a small neural network for the 
+diabetes binary classification problem. The example uses 33% of the data for validation.
+
+Checkpointing is set up to save the network weights only when there is an improvement in
+classification accuracy on the validation dataset (monitor='val acc' and mode='max'). The
+weights are stored in a file that includes the score in the filename
+weights-improvement-epoch-val acc=.2f.hdf5.
+
+#Checkpoint the weights when validation accuracy improves
+import numpy as np
+import pandas as pd
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.callbacks import ModelCheckpoint
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load diabetes dataset
+data = pd.read_csv('diabetes.csv')
+array = data.values
+
+#split into input(X) and output(Y) variables
+X = array[:,0:8]
+Y = array[:,8]
+
+#create model
+model = Sequential()
+model.add(Dense(12, input_dim=8, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(8, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(1, kernel_initializer='uniform', activation='sigmoid'))
+
+#compile model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+#checkpoint
+filepath = 'weights-improvement-{epoch:02d}-{val_acc:.2f}.hdf5'
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1,
+    save_best_only=True, mode='max')
+callbacks_list =[checkpoint]
+
+#fit model
+model.fit(X, Y, validation_split=0.33, epochs=150, batch_size=10,
+    callbacks=callbacks_list, verbose=0)
+
+Results:
+Epoch 00140: val_acc improved from 0.78346 to 0.78346, saving model to weights-improvement-140-0.78.hdf5
+
+Epoch 00141: val_acc did not improve from 0.78346
+
+Epoch 00142: val_acc did not improve from 0.78346
+
+Epoch 00143: val_acc did not improve from 0.78346
+
+Epoch 00144: val_acc improved from 0.78346 to 0.78740, saving model to weights-improvement-144-0.79.hdf5
+
+Running the example produces the output above, truncated for brevity. In the output you
+can see cases where an improvement in the model accuracy on the validation dataset resulted in
+a new weight file being written to disk.

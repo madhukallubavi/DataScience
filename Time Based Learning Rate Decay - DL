@@ -1,0 +1,68 @@
+The example below demonstrates using the time-based learning rate adaptation schedule in
+Keras. A small neural network model is constructed with a single hidden layer with 34 neurons
+and using the rectifier activation function. The output layer has a single neuron and uses the
+sigmoid activation function in order to output probability-like values. The learning rate for
+stochastic gradient descent has been set to a higher value of 0.1. The model is trained for 50
+epochs and the decay argument has been set to 0.002, calculated as 0:1/50 . Additionally, it can
+be a good idea to use momentum when using an adaptive learning rate. In this case we use a
+momentum value of 0.8.
+
+#Time Based Learning Rate Decay
+import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.optimizers import SGD
+from sklearn.preprocessing import LabelEncoder
+
+# fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+# load ionosphere dataset
+data = pd.read_csv("ionosphere.csv", header=None, skiprows=1)
+array = data.values
+
+
+# split into input (X) and output (Y) variables
+X = array[:,0:34].astype(float)
+Y = array[:,34]
+
+# encode class values as integers
+encoder = LabelEncoder()
+encoder.fit(Y)
+Y = encoder.transform(Y)
+
+# create model
+model = Sequential()
+model.add(Dense(34, input_dim=34, kernel_initializer='normal', activation='relu'))
+model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
+
+# Compile model
+epochs = 50
+learning_rate = 0.1
+decay_rate = learning_rate / epochs
+momentum = 0.8
+sgd = SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=False)
+model.compile(loss='binary_crossentropy', optimizer=sgd, metrics=['accuracy'])
+
+# Fit the model
+model.fit(X, Y, validation_split=0.33, epochs=epochs, batch_size=28, verbose=2)
+
+Results:
+Epoch 45/50
+ - 0s - loss: 0.0707 - acc: 0.9787 - val_loss: 0.0754 - val_acc: 0.9914
+Epoch 46/50
+ - 0s - loss: 0.0615 - acc: 0.9830 - val_loss: 0.0799 - val_acc: 0.9914
+Epoch 47/50
+ - 0s - loss: 0.0603 - acc: 0.9830 - val_loss: 0.0747 - val_acc: 0.9914
+Epoch 48/50
+ - 0s - loss: 0.0568 - acc: 0.9787 - val_loss: 0.0813 - val_acc: 0.9914
+Epoch 49/50
+ - 0s - loss: 0.0573 - acc: 0.9830 - val_loss: 0.0760 - val_acc: 0.9914
+Epoch 50/50
+ - 0s - loss: 0.0554 - acc: 0.9872 - val_loss: 0.0801 - val_acc: 0.9914
+ 
+The model is trained on 67% of the dataset and evaluated using a 33% validation dataset.
+Running the example shows a classification accuracy of 99.14%. This is higher than the baseline
+of 95.69% without the learning rate decay or momentum.

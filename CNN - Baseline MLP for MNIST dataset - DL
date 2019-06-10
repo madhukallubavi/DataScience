@@ -1,0 +1,82 @@
+Do we really need a complex model like a convolutional neural network to get the best results
+with MNIST? Weu can get good results using a very simple neural network model with a single
+hidden layer. In this section we will create a simple Multilayer Perceptron model that achieves
+an error rate of approximately 1.92%. We will use this as a baseline for comparison to more
+complex convolutional neural network models. Let's start of by importing the classes and
+functions we will need.
+
+#CNN - Baseline MLP for Mnist Dataset
+import numpy as np
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.utils import np_utils
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load data
+(X_train, Y_train), (X_test, Y_test) = mnist.load_data()
+
+#flatten 28*28 images to a 784 vector for each image
+num_pixels = X_train.shape[1] * X_train.shape[2]
+X_train = X_train.reshape(X_train.shape[0], num_pixels).astype('float32')
+X_test = X_test.reshape(X_test.shape[0], num_pixels).astype('float32')
+
+#normalize inputs from 0-255 to 0-1
+X_train = X_train/255
+X_test = X_test/255
+
+#one hot encode outputs
+Y_train = np_utils.to_categorical(Y_train)
+Y_test = np_utils.to_categorical(Y_test)
+num_classes = Y_test.shape[1]
+
+#define baseline model
+def baseline_model():
+  #create model
+  model = Sequential()
+  model.add(Dense(num_pixels, input_dim=num_pixels, kernel_initializer='normal', activation='relu'))
+  model.add(Dense(num_classes, kernel_initializer='normal', activation='softmax'))
+  #compile model
+  model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+  return model
+
+#build model
+model = baseline_model()
+
+#fit model
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=10, batch_size=200, verbose=2)
+
+#final evaluation of model
+scores = model.evaluate(X_test, Y_test, verbose=0)
+print("Baseline Error: %.2f%%" % (100-scores[1]*100))
+
+Results:
+Train on 60000 samples, validate on 10000 samples
+Epoch 1/10
+ - 1s - loss: 0.2761 - acc: 0.9213 - val_loss: 0.1414 - val_acc: 0.9581
+Epoch 2/10
+ - 1s - loss: 0.1091 - acc: 0.9687 - val_loss: 0.0933 - val_acc: 0.9711
+Epoch 3/10
+ - 1s - loss: 0.0713 - acc: 0.9790 - val_loss: 0.0778 - val_acc: 0.9762
+Epoch 4/10
+ - 1s - loss: 0.0493 - acc: 0.9858 - val_loss: 0.0678 - val_acc: 0.9798
+Epoch 5/10
+ - 1s - loss: 0.0359 - acc: 0.9899 - val_loss: 0.0654 - val_acc: 0.9793
+Epoch 6/10
+ - 1s - loss: 0.0263 - acc: 0.9928 - val_loss: 0.0607 - val_acc: 0.9811
+Epoch 7/10
+ - 1s - loss: 0.0191 - acc: 0.9955 - val_loss: 0.0642 - val_acc: 0.9807
+Epoch 8/10
+ - 1s - loss: 0.0154 - acc: 0.9962 - val_loss: 0.0570 - val_acc: 0.9819
+Epoch 9/10
+ - 1s - loss: 0.0105 - acc: 0.9979 - val_loss: 0.0585 - val_acc: 0.9830
+Epoch 10/10
+ - 1s - loss: 0.0076 - acc: 0.9987 - val_loss: 0.0635 - val_acc: 0.9808
+Baseline Error: 1.92%
+
+Running the example might take a few minutes when run on a CPU. We should see the
+output above. This simple network defined in very few lines of code achieves a respectable error
+rate of 1.92%.

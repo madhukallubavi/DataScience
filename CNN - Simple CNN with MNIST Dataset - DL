@@ -1,0 +1,90 @@
+Now, it is time to develop a more sophisticated convolutional neural network or CNN
+model. Keras does provide a lot of capability for creating convolutional neural networks. In this
+section we will create a simple CNN for MNIST that demonstrates how to use all of the aspects
+of a modern CNN implementation, including Convolutional layers, Pooling layers and Dropout
+layers. The first step is to import the classes and functions needed.
+
+#CNN - Simple CNN for MNIST Dataset
+import numpy as np
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers.convolutional import Conv2D, MaxPooling2D
+from keras.utils import np_utils
+
+# fix dimension ordering issue
+from keras import backend as K
+K.set_image_dim_ordering('th')
+
+# fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+# load data
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+# reshape to be [samples][channels][width][height]
+X_train = X_train.reshape(X_train.shape[0], 1, 28, 28).astype('float32')
+X_test = X_test.reshape(X_test.shape[0], 1, 28, 28).astype('float32')
+
+# normalize inputs from 0-255 to 0-1
+X_train = X_train / 255
+X_test = X_test / 255
+
+# one hot encode outputs
+y_train = np_utils.to_categorical(y_train)
+y_test = np_utils.to_categorical(y_test)
+num_classes = y_test.shape[1]
+
+# define a simple CNN model
+def baseline_model():
+  # create model
+  model = Sequential()
+  model.add(Conv2D(32, (5, 5), input_shape=(1, 28, 28), activation='relu'))
+  model.add(MaxPooling2D(pool_size=(2, 2)))
+  model.add(Dropout(0.2))
+  model.add(Flatten())
+  model.add(Dense(128, activation='relu'))
+  model.add(Dense(num_classes, activation='softmax'))
+  # Compile model
+  model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+  return model
+
+# build the model
+model = baseline_model()
+
+# Fit the model
+model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=200)
+
+# Final evaluation of the model
+scores = model.evaluate(X_test, y_test, verbose=0)
+print("CNN Error: %.2f%%" % (100-scores[1]*100))
+
+Results:
+Train on 60000 samples, validate on 10000 samples
+Epoch 1/10
+60000/60000 [==============================] - 3s 52us/step - loss: 0.2440 - acc: 0.9307 - val_loss: 0.0790 - val_acc: 0.9774
+Epoch 2/10
+60000/60000 [==============================] - 2s 29us/step - loss: 0.0727 - acc: 0.9782 - val_loss: 0.0491 - val_acc: 0.9843
+Epoch 3/10
+60000/60000 [==============================] - 2s 29us/step - loss: 0.0518 - acc: 0.9843 - val_loss: 0.0437 - val_acc: 0.9854
+Epoch 4/10
+60000/60000 [==============================] - 2s 30us/step - loss: 0.0408 - acc: 0.9876 - val_loss: 0.0348 - val_acc: 0.9883
+Epoch 5/10
+60000/60000 [==============================] - 2s 30us/step - loss: 0.0340 - acc: 0.9895 - val_loss: 0.0338 - val_acc: 0.9888
+Epoch 6/10
+60000/60000 [==============================] - 2s 30us/step - loss: 0.0279 - acc: 0.9912 - val_loss: 0.0368 - val_acc: 0.9875
+Epoch 7/10
+60000/60000 [==============================] - 2s 30us/step - loss: 0.0233 - acc: 0.9925 - val_loss: 0.0318 - val_acc: 0.9901
+Epoch 8/10
+60000/60000 [==============================] - 2s 30us/step - loss: 0.0207 - acc: 0.9935 - val_loss: 0.0346 - val_acc: 0.9899
+Epoch 9/10
+60000/60000 [==============================] - 2s 30us/step - loss: 0.0178 - acc: 0.9941 - val_loss: 0.0334 - val_acc: 0.9902
+Epoch 10/10
+60000/60000 [==============================] - 2s 29us/step - loss: 0.0147 - acc: 0.9954 - val_loss: 0.0371 - val_acc: 0.9896
+CNN Error: 1.04%
+
+Running the example, the accuracy on the training and validation test is printed each epoch
+and at the end of the classification error rate is printed. Epochs may take about 45 seconds to
+run on the GPU (e.g. on AWS). You can see that the network achieves an error rate of 1.04%,
+which is better than our simple Multilayer Perceptron model.

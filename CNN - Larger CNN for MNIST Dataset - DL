@@ -1,0 +1,85 @@
+Now that we have seen how to create a simple CNN, let's take a look at a model capable of close
+to state-of-the-art results. We import the classes and functions then load and prepare the data
+the same as in the previous CNN example. This time we define a larger CNN architecture with
+additional convolutional, max pooling layers and fully connected layers.
+
+#CNN - Larger CNN for MNIST Dataset
+import numpy as np
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers.convolutional import Conv2D, MaxPooling2D
+from keras.utils import np_utils
+from keras import backend as K
+K.set_image_dim_ordering('th')
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load data
+(X_train, Y_train), (X_test, Y_test) = mnist.load_data()
+
+#reshape to be [samples][pixels][width][height]
+X_train = X_train.reshape(X_train.shape[0], 1, 28, 28).astype('float32')
+X_test = X_test.reshape(X_test.shape[0], 1, 28, 28).astype('float32')
+
+#one hot endcoe outputs
+Y_train = np_utils.to_categorical(Y_train)
+Y_test = np_utils.to_categorical(Y_test)
+num_classes = Y_test.shape[1]
+
+#Define larger model
+def larger_model():
+  #create model
+  model = Sequential()
+  model.add(Conv2D(30, (5,5), input_shape=(1,28,28), activation='relu'))
+  model.add(MaxPooling2D(pool_size=(2,2)))
+  model.add(Conv2D(15, (3,3), activation='relu'))
+  model.add(MaxPooling2D(pool_size=(2,2)))
+  model.add(Dropout(0.2))
+  model.add(Flatten())
+  model.add(Dense(128, activation='relu'))
+  model.add(Dense(50, activation='relu'))
+  model.add(Dense(num_classes, activation='softmax'))
+  #compile model
+  model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+  return model
+
+#build model
+model = larger_model()
+
+#fit model
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=10, batch_size=200)
+
+#Final evaluation of model
+scores = model.evaluate(X_test, Y_test, verbose=0)
+print("Larger CNN Error: %.2f%%" % (100-scores[1]*100))
+
+Results:
+Train on 60000 samples, validate on 10000 samples
+Epoch 1/10
+60000/60000 [==============================] - 5s 76us/step - loss: 0.7129 - acc: 0.8645 - val_loss: 0.1033 - val_acc: 0.9666
+Epoch 2/10
+60000/60000 [==============================] - 4s 61us/step - loss: 0.1320 - acc: 0.9603 - val_loss: 0.0670 - val_acc: 0.9772
+Epoch 3/10
+60000/60000 [==============================] - 4s 60us/step - loss: 0.0891 - acc: 0.9729 - val_loss: 0.0575 - val_acc: 0.9802
+Epoch 4/10
+60000/60000 [==============================] - 4s 61us/step - loss: 0.0741 - acc: 0.9767 - val_loss: 0.0522 - val_acc: 0.9824
+Epoch 5/10
+60000/60000 [==============================] - 4s 62us/step - loss: 0.0675 - acc: 0.9787 - val_loss: 0.0423 - val_acc: 0.9858
+Epoch 6/10
+60000/60000 [==============================] - 4s 61us/step - loss: 0.0585 - acc: 0.9815 - val_loss: 0.0389 - val_acc: 0.9871
+Epoch 7/10
+60000/60000 [==============================] - 4s 61us/step - loss: 0.0533 - acc: 0.9827 - val_loss: 0.0432 - val_acc: 0.9857
+Epoch 8/10
+60000/60000 [==============================] - 4s 60us/step - loss: 0.0473 - acc: 0.9850 - val_loss: 0.0457 - val_acc: 0.9857
+Epoch 9/10
+60000/60000 [==============================] - 4s 60us/step - loss: 0.0432 - acc: 0.9859 - val_loss: 0.0382 - val_acc: 0.9880
+Epoch 10/10
+60000/60000 [==============================] - 4s 60us/step - loss: 0.0402 - acc: 0.9874 - val_loss: 0.0346 - val_acc: 0.9887
+Larger CNN Error: 1.13%
+
+Running the example prints accuracy on the training and validation datasets each epoch and
+a final classification error rate. The model takes about 60 seconds to run per epoch on a modern
+CPU. This slightly larger model achieves the respectable classification error rate of 1.13%.

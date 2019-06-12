@@ -1,0 +1,44 @@
+Objects in our images may not be centered in the frame. They may be off-center in a variety
+of different ways. You can train your deep learning network to expect and currently handle
+off-center objects by artificially creating shifted versions of your training data. Keras supports
+separate horizontal and vertical random shifting of training data by the width shift range
+and height shift range arguments.
+
+#Random Shifts
+from keras.datasets import mnist
+from keras.preprocessing.image import ImageDataGenerator
+from matplotlib import pyplot as plt
+from keras import backend as k
+K.set_image_dim_ordering('th')
+
+#load data
+(X_train, Y_train), (X_test, Y_test) = mnist.load_data()
+
+#reshape to be [samples][pixels][width][height]
+X_train = X_train.reshape(X_train.shape[0], 1, 28, 28)
+X_test = X_test.reshape(X_test.shape[0], 1, 28, 28)
+
+#convert from integer to float
+X_train = X_train.astype('float32')
+X_test = X_test.astype('float32')
+
+#define data preperation
+shift = 0.2
+datagen = ImageDataGenerator(width_shift_range=shift, height_shift_range=shift)
+
+#fit parameters from data
+datagen.fit(X_train)
+
+#configure batch size and retrieve one batch of images
+for X_batch, Y_batch in datagen.flow(X_train, Y_train, batch_size=9):
+  #create a grid of 3x3 images
+  for i in range(0,9):
+    plt.subplot(330 + 1 + i)
+    plt.imshow(X_batch[i].reshape(28,28), cmap=plt.get_cmap('gray'))
+  #show plot
+  plt.show()
+  break
+
+Running this example creates shifted versions of the digits. Again, this is not required for
+MNIST as the handwritten digits are already centered, but you can see how this might be useful
+on more complex problem domains.

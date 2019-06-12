@@ -1,0 +1,44 @@
+Sometimes images in our sample data may have varying and different rotations in the scene.
+You can train your model to better handle rotations of images by artificially and randomly
+rotating images from your dataset during training. The example below creates random rotations
+of the MNIST digits up to 90 degrees by setting the rotation range argument.
+
+#Random Rotations
+from keras.datasets import mnist
+from keras.preprocessing.image import ImageDataGenerator
+from matplotlib import pyplot as plt
+from keras import backend as K
+K.set_image_dim_ordering('th')
+
+#load data
+(X_train, Y_train), (X_test, Y_test) = mnist.load_data()
+
+#reshape to be [samples][pixels][width][height]
+X_train = X_train.reshape(X_train.shape[0], 1, 28, 28)
+X_test = X_test.reshape(X_test.shape[0], 1, 28, 28)
+
+#convert from integer to float
+X_train = X_train.astype('float32')
+X_test = X_test.astype('float32')
+
+#define data preperation
+datagen = ImageDataGenerator(rotation_range=90)
+
+#fit paramenters from data
+datagen.fit(X_train)
+
+#configure batch size and retrieve one batch of images
+for X_batch, Y_batch in datagen.flow(X_train, Y_train, batch_size=9):
+  #create a grid of 3x3 images
+  for i in range(0,9):
+    plt.subplot(330 + 1 + i)
+    plt.imshow(X_batch[i].reshape(28,28), cmap=plt.get_cmap('gray'))
+  #show plt
+  plt.show()
+  break
+
+
+Running the example, you can see that images have been rotated left and right up to a limit
+of 90 degrees. This is not helpful on this problem because the MNIST digits have a normalized
+orientation, but this transform might be of help when learning from photographs where the
+objects may have different orientations.

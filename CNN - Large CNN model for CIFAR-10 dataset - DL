@@ -1,0 +1,97 @@
+We have seen that a simple CNN performs poorly on this complex problem. In this section
+we look at scaling up the size and complexity of our model. Let's design a deep version of the
+simple CNN above. We can introduce an additional round of convolutions with many more
+feature maps. We will use the same pattern of Convolutional, Dropout, Convolutional and Max
+Pooling layers.
+
+This pattern will be repeated 3 times with 32, 64, and 128 feature maps. The effect will be
+an increasing number of feature maps with a smaller and smaller size given the max pooling
+layers. Finally an additional and larger Dense layer will be used at the output end of the
+network in an attempt to better translate the large number feature maps to class values. We
+can summarize a new network architecture as follows:
+
+#Large CNN model for the CIFAR-10 dataset
+import numpy as np
+from keras.datasets import cifar10
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.constraints import maxnorm
+from keras.optimizers import SGD
+from keras.layers.convolutional import Conv2D, MaxPooling2D
+from keras.utils import np_utils
+from keras import backend as K
+K.set_image_dim_ordering('th')
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load data
+(X_train, Y_train), (X_test, Y_test) = cifar10.load_data()
+
+#normalize inputs from 0-255 to 0.0-1.0
+X_train = X_train.astype('float32')
+X_test = X_test.astype('float32')
+X_train = X_train/255.0
+X_test = X_test/255.0
+
+#one hot encode outputs
+Y_train = np_utils.to_categorical(Y_train)
+Y_test = np_utils.to_categorical(Y_test)
+num_classes = Y_test.shape[1]
+
+#create model
+model = Sequential()
+model.add(Conv2D(32, (3,3), input_shape=(3,32,32), activation='relu', padding='same'))
+model.add(Dropout(0.2))
+model.add(Conv2D(32, (3,3), activation='relu', padding='same'))
+model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(Conv2D(64, (3,3), activation='relu', padding='same'))
+model.add(Dropout(0.2))
+model.add(Conv2D(64, (3,3), activation='relu', padding='same'))
+model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(Conv2D(128, (3,3), activation='relu', padding='same'))
+model.add(Dropout(0.2))
+model.add(Conv2D(128, (3,3), activation='relu', padding='same'))
+model.add(MaxPooling2D(pool_size=(2,2)))
+model.add(Flatten())
+model.add(Dropout(0.2))
+model.add(Dense(1024, activation='relu', kernel_constraint=maxnorm(3)))
+model.add(Dropout(0.2))
+model.add(Dense(512, activation='relu', kernel_constraint=maxnorm(3)))
+model.add(Dropout(0.2))
+model.add(Dense(num_classes, activation='softmax'))
+
+#Compile model
+epochs = 25
+lrate = 0.01
+decay = lrate/epochs
+sgd = SGD(lr=lrate, momentum=0.9, decay=decay, nesterov=False)
+model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+print(model.summary())
+
+#fit model
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), epochs=epochs, batch_size=64)
+
+#Final evaluation of model
+scores = model.evaluate(X_test, Y_test, verbose=0)
+print("Accuracy: %.2f%%" % (scores[1]*100))
+
+Results:
+Epoch 20/25
+50000/50000 [==============================] - 21s 424us/step - loss: 0.4949 - acc: 0.8265 - val_loss: 0.6454 - val_acc: 0.7751
+Epoch 21/25
+50000/50000 [==============================] - 21s 427us/step - loss: 0.4820 - acc: 0.8277 - val_loss: 0.6311 - val_acc: 0.7839
+Epoch 22/25
+50000/50000 [==============================] - 22s 438us/step - loss: 0.4591 - acc: 0.8384 - val_loss: 0.6469 - val_acc: 0.7809
+Epoch 23/25
+50000/50000 [==============================] - 22s 448us/step - loss: 0.4474 - acc: 0.8411 - val_loss: 0.6301 - val_acc: 0.7839
+Epoch 24/25
+50000/50000 [==============================] - 22s 448us/step - loss: 0.4406 - acc: 0.8444 - val_loss: 0.6180 - val_acc: 0.7889
+Epoch 25/25
+50000/50000 [==============================] - 22s 449us/step - loss: 0.4208 - acc: 0.8501 - val_loss: 0.6179 - val_acc: 0.7898
+Accuracy: 78.98%
+
+Running this example prints the classification accuracy and loss on the training and test
+datasets each epoch. The estimate of classification accuracy for the final model is 78.98% which
+is nearly 10 points better than our simpler model.

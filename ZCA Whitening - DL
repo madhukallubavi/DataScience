@@ -1,0 +1,45 @@
+A whitening transform of an image is a linear algebra operation that reduces the redundancy
+in the matrix of pixel images. Less redundancy in the image is intended to better highlight
+the structures and features in the image to the learning algorithm. Typically, image whitening
+is performed using the Principal Component Analysis (PCA) technique. More recently, an
+alternative called ZCA shows better results and results in transformed images that keeps all
+of the original dimensions and unlike PCA, resulting transformed images still look like their
+originals. You can perform a ZCA whitening transform by setting the zca whitening argument to True.
+
+#ZCA Whitening
+from keras.datasets import mnist
+from keras.preprocessing.image import ImageDataGenerator
+from matplotlib import pyplot as plt
+from keras import backend as K
+K.set_image_dim_ordering('th')
+
+#load data
+(X_train, Y_train), (X_test, Y_test) = mnist.load_data()
+
+#reshape to be [samples][pixels][width][height]
+X_train = X_train.reshape(X_train.shape[0], 1, 28, 28)
+X_test = X_test.reshape(X_test.shape[0], 1, 28, 28)
+
+#convert from integer to float
+X_train = X_train.astype('float32')
+X_test = X_test.astype('float32')
+
+#define data preperation
+datagen = ImageDataGenerator(zca_whitening=True)
+
+#fit parameters from data
+datagen.fit(X_train)
+
+#configure batch size and retrieve one batch of images
+for X_batch, Y_batch in datagen.flow(X_train, Y_train, batch_size=9):
+  #create a grid of 3x3 images
+  for i in range(0, 9):
+    plt.subplot(330 + 1 + i)
+    plt.imshow(X_batch[i].reshape(28,28), cmap=plt.get_cmap('gray'))
+  #show plot
+  plt.show()
+  break
+
+
+Running the example, we can see the same general structure in the images and how the
+outline of each digit has been highlighted.

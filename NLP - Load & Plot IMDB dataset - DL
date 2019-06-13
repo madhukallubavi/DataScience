@@ -1,0 +1,63 @@
+Keras provides access to the IMDB dataset built-in3. The imdb.load data() function allows
+us to load the dataset in a format that is ready for use in neural network and deep learning
+models. The words have been replaced by integers that indicate the absolute popularity of the
+word in the dataset. The sentences in each review are therefore comprised of a sequence of
+integers. Calling imdb.load data() the first time will download the IMDB dataset to your computer
+and store it in our home directory under /keras/datasets/imdb.pkl as a 32 megabyte file.
+Usefully, the imdb.load data() function provides additional arguments including the number
+of top words to load (where words with a lower integer are marked as zero in the returned data),
+the number of top words to skip (to avoid the the's) and the maximum length of reviews to
+support. Let's load the dataset and calculate some properties of it. We will start of by loading
+some libraries and loading the entire IMDB dataset as a training dataset.
+
+#load and plot the imdb dataset
+import numpy as np
+from keras.datasets import imdb
+from matplotlib import pyplot as plt
+
+#load data
+(X_train, Y_train), (X_test, Y_test) = imdb.load_data()
+X = np.concatenate((X_train, X_test), axis=0)
+Y = np.concatenate((Y_train, Y_test), axis=0)
+
+#summarize size
+print('Training data: ')
+print(X.shape)
+print(Y.shape)
+
+#summarize number of classes
+print("Classes: ")
+print(np.unique(Y))
+
+#summarize number of words
+print("Number of workds: ")
+print(len(np.unique(np.hstack(X))))
+
+#summarize review length
+print('Review length: ')
+result = [len(x) for x in X] #(use any code for result)
+or
+result = list(map(len, X)) #(use any code for result)
+print("Mean %.2f words (%f)" % (np.mean(result), np.std(result)))
+
+#plot review length as a boxplot and histogram
+plt.subplot(121)
+plt.boxplot(result)
+plt.subplot(122)
+plt.hist(result)
+plt.show()
+
+Results:
+Training data: 
+(50000,)
+(50000,)
+Classes: 
+[0 1]
+Number of workds: 
+88585
+Review length: 
+Mean 234.76 words (172.911495)
+
+Looking at the box and whisker plot and the histogram for the review lengths in words,
+we can probably see an exponential distribution that we can probably cover the mass of the
+distribution with a clipped length of 400 to 500 words.

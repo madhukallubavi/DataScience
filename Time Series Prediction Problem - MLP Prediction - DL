@@ -1,0 +1,99 @@
+We will phrase the time series prediction problem as a regression problem. That is, given the
+number of passengers (in units of thousands) this month, what is the number of passengers next
+month. We can write a simple function to convert our single column of data into a two-column
+dataset. The first column containing this month's (t) passenger count and the second column
+containing next month's (t+1) passenger count, to be predicted. Before we get started, let's
+first import all of the functions and classes we intend to use.
+
+#MLP to Predict International Airline Passengers (t+1, given t)
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import math
+from keras.models import Sequential
+from keras.layers import Dense
+
+#fix random seed for reproducibility
+seed = 42
+np.random.seed(seed)
+
+#load dataset
+data = pd.read_csv('international-airline-passengers.csv', usecols=[1],
+    engine='python', skipfooter=3)
+dataset = data.values
+dataset = dataset.astype('float32')
+
+#split into train and test sets
+train_size = int(len(dataset) *0.67)
+test_size = len(dataset) - train_size
+train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
+print(len(train), len(test))
+
+#convert an array of values into a dataset matrix
+def create_dataset(dataset, look_back=1):
+  dataX, dataY = [], []
+  for i in range(len(dataset)-look_back-1):
+    a = dataset[i:(i+look_back), 0]
+    dataX.append(a)
+    dataY.append(dataset[i + look_back, 0])
+  return np.array(dataX), np.array(dataY)
+
+#reshape into X=t and Y=t+1
+look_back=1
+trainX, trainY = create_dataset(train, look_back)
+testX, testY = create_dataset(test, look_back)
+
+#create and fit MLP model
+model = Sequential()
+model.add(Dense(8, input_dim=look_back, activation='relu'))
+model.add(Dense(1))
+model.compile(loss='mean_squared_error', optimizer='adam')
+model.fit(trainX, trainY, epochs=200, batch_size=2, verbose=2)
+
+#Estimate model performance
+trainScore = model.evaluate(trainX, trainY, verbose=0)
+print("Train Score: %.2f MSE (%.2f RMSE)" % (trainScore, math.sqrt(trainScore)))
+testScore = model.evaluate(testX, testY, verbose=0)
+print("Test Score: %.2f MSE (%.2f RMSE)" % (testScore, math.sqrt(testScore)))
+
+# generate predictions for training
+trainPredict = model.predict(trainX)
+testPredict = model.predict(testX)
+
+# shift train predictions for plotting
+trainPredictPlot = np.empty_like(dataset)
+trainPredictPlot[:, :] = np.nan
+trainPredictPlot[look_back:len(trainPredict)+look_back, :] = trainPredict
+
+# shift test predictions for plotting
+testPredictPlot = np.empty_like(dataset)
+testPredictPlot[:, :] = np.nan
+testPredictPlot[len(trainPredict)+(look_back*2)+1:len(dataset)-1, :] = testPredict
+
+# plot baseline and predictions
+plt.plot(dataset)
+plt.plot(trainPredictPlot)
+plt.plot(testPredictPlot)
+plt.show()
+
+Results
+Epoch 196/200
+ - 0s - loss: 565.7448
+Epoch 197/200
+ - 0s - loss: 550.5594
+Epoch 198/200
+ - 0s - loss: 535.9424
+Epoch 199/200
+ - 0s - loss: 547.6276
+Epoch 200/200
+ - 0s - loss: 565.4846
+Train Score: 530.61 MSE (23.04 RMSE)
+Test Score: 2358.75 MSE (48.57 RMSE)
+
+Taking the square root of the performance estimates, we can see that the model has an
+average error of 23 passengers (in thousands) on the training dataset and 48 passengers (in
+thousands) on the test dataset.
+
+We can see that the model did a pretty poor job of fitting both the training and the test
+datasets. It basically predicted the same input value as the output. The plot makes the
+prediction look good, but in fact, the shift in the prediction results in a poor skill score.

@@ -1,0 +1,104 @@
+We can also phrase the problem so that multiple recent time steps can be used to make the
+prediction for the next time step. This is called the window method, and the size of the window
+is a parameter that can be tuned for each problem. For example, given the current time (t) we
+want to predict the value at the next time in the sequence (t+1), we can use the current time
+(t) as well as the two prior times (t-1 and t-2). When phrased as a regression problem the
+input variables are t-2, t-1, t and the output variable is t+1.
+
+The create dataset() function we wrote in the previous section allows us to create this
+formulation of the time series problem by increasing the look back argument from 1 to 3.
+
+We can re-run the example in the previous section with the larger window size. We will
+increase the network capacity to handle the additional information. The first hidden layer is
+increased to 12 neurons and a second hidden layer is added with 8 neurons. The number of
+epochs is also increased to 400.
+
+#MLP to predict International Airline Passengers (t+1, given t, t-1, t-2)
+import numpy as np
+import pandas as pd
+import math
+import matplotlib.pyplot as plt
+from keras.models import Sequential
+from keras.layers import Dense
+
+#convert array of values into a dataset matrix
+def create_dataset(dataset, look_back=1):
+  dataX, dataY = [], []
+  for i in range(len(dataset)-look_back-1):
+    a = dataset[i:(i+look_back), 0]
+    dataX.append(a)
+    dataY.append(dataset[i+look_back, 0])
+  return np.array(dataX), np.array(dataY)
+
+#fix random seed for reproducibility
+np.random.seed(42)
+
+#load dataset
+data = pd.read_csv('international-airline-passengers.csv', usecols=[1],
+    engine='python', skipfooter=3)
+dataset = data.values
+dataset = dataset.astype('float32')
+
+#split into train and test sets
+train_size = int(len(dataset)*0.67)
+test_size = len(dataset) - train_size
+train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
+
+#reshape dataset
+look_back = 3
+trainX, trainY = create_dataset(train, look_back)
+testX, testY = create_dataset(test, look_back)
+
+#create and fit MLP model
+model = Sequential()
+model.add(Dense(12, input_dim=look_back, activation='relu'))
+model.add(Dense(8, activation='relu'))
+model.add(Dense(1))
+model.compile(loss='mean_squared_error', optimizer='adam')
+model.fit(trainX, trainY, epochs=400, batch_size=2, verbose=2)
+
+#estimate model preformance
+trainScore=model.evaluate(trainX, trainY, verbose=0)
+print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, math.sqrt(trainScore)))
+testScore=model.evaluate(testX, testY, verbose=0)
+print('Test Score: %.2f MSE (%.2f RMSE)' % (testScore, math.sqrt(testScore)))
+
+#generate predictions for training
+trainPredict = model.predict(trainX)
+testPredict = model.predict(testX)
+
+#shift train predictions for plotting
+trainPredictPlot = np.empty_like(dataset)
+trainPredictPlot[:, :] = np.nan
+trainPredictPlot[look_back:len(trainPredict)+look_back, :]=trainPredict
+
+#shift test predictions for plotting
+testPredictPlot=np.empty_like(dataset)
+testPredictPlot[:, :]=np.nan
+testPredictPlot[len(trainPredict)+(look_back*2)+1:len(dataset)-1, :]=testPredict
+
+#plot baseline and predictions
+plt.plot(dataset)
+plt.plot(trainPredictPlot)
+plt.plot(testPredictPlot)
+plt.show()
+
+Results:
+Epoch 396/400
+ - 0s - loss: 397.2512
+Epoch 397/400
+ - 0s - loss: 424.3182
+Epoch 398/400
+ - 0s - loss: 435.5359
+Epoch 399/400
+ - 0s - loss: 411.1795
+Epoch 400/400
+ - 0s - loss: 449.2081
+Train Score: 415.82 MSE (20.39 RMSE)
+Test Score: 2114.37 MSE (45.98 RMSE)
+
+We can see that the error was reduced compared to that of the previous section. Again, the
+window size and the network architecture were not tuned, this is just a demonstration of how
+to frame a prediction problem. Taking the square root of the performance scores we can see
+the average error on the training dataset was 23 passengers (in thousands per month) and the
+average error on the unseen test set was 47 passengers (in thousands per month).

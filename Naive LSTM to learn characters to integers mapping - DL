@@ -1,0 +1,61 @@
+In this tutorial we are going to develop and contrast a number of different LSTM recurrent
+neural network models. The context of these comparisons will be a simple sequence prediction
+problem of learning the alphabet. That is given a letter of the alphabet, predict the next
+letter of the alphabet. This is a simple sequence prediction problem that once understood can
+be generalized to other sequence prediction problems like time series prediction and sequence
+classification. Let's prepare the problem with some Python code that we can reuse from example
+to example. Firstly, let's import all of the classes and functions we plan to use in this tutorial.
+
+#Naive LSTM to learn charecters to intergers mapping
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
+from keras.utils import np_utils
+
+#fix random seed for reproducibility
+np.random.seed(42)
+
+#define raw dataset
+alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+#create mapping of charecters to intergers (0-25) and the reverse
+char_to_int = dict((c, i) for i, c in enumerate(alphabet))
+int_to_char = dict((i, c) for i, c in enumerate(alphabet))
+
+#prepare dataset of input to output pairs encoded as integers
+seq_length = 1
+dataX = []
+dataY = []
+for i in range(0, len(alphabet) - seq_length, 1):
+  seq_in = alphabet[i:i + seq_length]
+  seq_out = alphabet[i+seq_length]
+  dataX.append([char_to_int[char] for char in seq_in])
+  dataY.append(char_to_int[seq_out])
+  print(seq_in, '->', seq_out)
+
+Results:
+A -> B
+B -> C
+C -> D
+D -> E
+E -> F
+F -> G
+G -> H
+H -> I
+I -> J
+J -> K
+K -> L
+L -> M
+M -> N
+N -> O
+O -> P
+P -> Q
+Q -> R
+R -> S
+S -> T
+T -> U
+U -> V
+V -> W
+W -> X
+X -> Y
+Y -> Z

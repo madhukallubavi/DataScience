@@ -1,0 +1,57 @@
+The problem that we will use to demonstrate sequence learning in this tutorial is the IMDB
+movie review sentiment classification problem. We can quickly develop a small LSTM for the 
+IMDB problem and achieve good accuracy. Let's start of by importing the classes and functions
+required for this model and initializing the random number generator to a constant value to 
+ensure we can easily reproduce the results.
+
+#LSTM for sequence classification in the IMDB dataset
+import numpy as np
+from keras.datasets import imdb
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import LSTM
+from keras.layers.embeddings import Embedding
+from keras.preprocessing import sequence
+
+#fix random seed for reproducibility
+np.random.seed(7)
+
+#load the dataset but only keep the top n words, zero the rest
+top_words = 5000
+(X_train, Y_train), (X_test, Y_test) = imdb.load_data(num_words=top_words)
+
+#truncate and pad input sequences
+max_review_length = 500
+X_train = sequence.pad_sequences(X_train, maxlen=max_review_length)
+X_test = sequence.pad_sequences(X_test, maxlen=max_review_length)
+
+#create model
+embedding_vector_length=32
+model=Sequential()
+model.add(Embedding(top_words, embedding_vector_length, input_length=max_review_length))
+model.add(LSTM(100))
+model.add(Dense(1, activation='sigmoid'))
+
+#compile model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+print(model.summary())
+
+#fit model
+model.fit(X_train, Y_train, epochs=3, batch_size=64)
+
+#final evaluation of model
+scores = model.evaluate(X_test, Y_test, verbose=0)
+print("Accuracy: %.2f%%" % (scores[1]*100))
+
+Results:
+Epoch 1/3
+25000/25000 [==============================] - 378s 15ms/step - loss: 0.4450 - acc: 0.7881
+Epoch 2/3
+25000/25000 [==============================] - 364s 15ms/step - loss: 0.3318 - acc: 0.8677
+Epoch 3/3
+25000/25000 [==============================] - 360s 14ms/step - loss: 0.2882 - acc: 0.8863
+Accuracy: 86.34%
+
+We can see that this simple LSTM with little tuning achieves near state-of-the-art results on
+the IMDB problem. Importantly, this is a template that we can use to apply LSTM networks
+to your own sequence classification problems.

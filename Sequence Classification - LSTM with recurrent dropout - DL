@@ -53,3 +53,9 @@ Epoch 3/3
 25000/25000 [==============================] - 444s 18ms/step - loss: 0.4158 - 
 acc: 0.8197
 Accuracy: 82.62%
+
+We can see that the LSTM specific dropout has a more pronounced effect on the convergence
+of the network than the layer-wise dropout. As above, the number of epochs was kept constant
+and could be increased to see if the skill of the model can be further lifted. Dropout is a powerful
+technique for combating overfitting in your LSTM models and it is a good idea to try both
+methods, but we may bet better results with the gate-specific dropout provided in Keras.

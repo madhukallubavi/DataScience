@@ -1,0 +1,97 @@
+In Keras, the intended use of LSTMs is to provide context in the form of time steps, rather than
+windowed features like with other network types. We can take our first example and simply
+change the sequence length from 1 to 3. The difference is that the reshaping of the input data 
+takes the sequence as a time step sequence of one feature, rather than a single time step of 
+multiple features. This is the intended use of providing sequence context to your LSTM in Keras.
+
+#Naive LSTM to learn three-char time steps to one-char mapping
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
+from keras.utils import np_utils
+
+#fix random seed for reproducibility
+np.random.seed(42)
+
+#define the raw dataset
+alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+#create mapping of characters to integers (0-25) and the reverse
+char_to_int = dict((c, i) for i, c in enumerate(alphabet))
+int_to_char = dict((i, c) for i, c in enumerate(alphabet))
+
+#prepare the dataset of input to output pairs encoded as integers
+seq_length = 3
+dataX = []
+dataY = []
+for i in range(0, len(alphabet) - seq_length, 1):
+  seq_in = alphabet[i:i + seq_length]
+  seq_out = alphabet[i + seq_length]
+  dataX.append([char_to_int[char] for char in seq_in])
+  dataY.append(char_to_int[seq_out])
+  print(seq_in, '->', seq_out)
+
+#reshape X to be [samples, time steps, features]
+X = np.reshape(dataX, (len(dataX), seq_length, 1))
+
+#normalize
+X = X / float(len(alphabet))
+
+#one hot encode the output variable
+Y = np_utils.to_categorical(dataY)
+
+#create and fit the model
+model = Sequential()
+model.add(LSTM(32, input_shape=(X.shape[1], X.shape[2])))
+model.add(Dense(Y.shape[1], activation='softmax'))
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.fit(X, Y, epochs=500, batch_size=1, verbose=2)
+
+#summarize performance of the model
+scores = model.evaluate(X, Y, verbose=0)
+print("Model Accuracy: %.2f%%" % (scores[1]*100))
+
+#demonstrate some model predictions
+for pattern in dataX:
+  x = np.reshape(pattern, (1, len(pattern), 1))
+  x = x / float(len(alphabet))
+  prediction = model.predict(x, verbose=0)
+  index = np.argmax(prediction)
+  result = int_to_char[index]
+  seq_in = [int_to_char[value] for value in pattern]
+  print(seq_in, "->", result)
+
+Results:
+Model Accuracy: 100.00%
+['A', 'B', 'C'] -> D
+['B', 'C', 'D'] -> E
+['C', 'D', 'E'] -> F
+['D', 'E', 'F'] -> G
+['E', 'F', 'G'] -> H
+['F', 'G', 'H'] -> I
+['G', 'H', 'I'] -> J
+['H', 'I', 'J'] -> K
+['I', 'J', 'K'] -> L
+['J', 'K', 'L'] -> M
+['K', 'L', 'M'] -> N
+['L', 'M', 'N'] -> O
+['M', 'N', 'O'] -> P
+['N', 'O', 'P'] -> Q
+['O', 'P', 'Q'] -> R
+['P', 'Q', 'R'] -> S
+['Q', 'R', 'S'] -> T
+['R', 'S', 'T'] -> U
+['S', 'T', 'U'] -> V
+['T', 'U', 'V'] -> W
+['U', 'V', 'W'] -> X
+['V', 'W', 'X'] -> Y
+['W', 'X', 'Y'] -> Z
+
+We can see that the model learns the problem perfectly as evidenced by the model evaluation
+and the example predictions. But it has learned a simpler problem. Specifically, it has learned
+to predict the next letter from a sequence of three letters in the alphabet. It can be shown any
+random sequence of three letters from the alphabet and predict the next letter. It cannot actually 
+enumerate the alphabet. I expect that a larger enough Multilayer Perceptron network might be able
+to learn the same mapping using the window method. The LSTM networks are stateful. They should be
+able to learn the whole alphabet sequence, but by default the Keras implementation resets the 
+network state after each training batch.

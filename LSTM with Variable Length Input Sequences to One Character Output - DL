@@ -1,0 +1,114 @@
+In the previous section we discovered that the Keras stateful LSTM was really only a short cut
+to replaying the first n-sequences, but didn't really help us learn a generic model of the alphabet.
+In this section we explore a variation of the stateless LSTM that learns random subsequences of
+the alphabet and an effort to build a model that can be given arbitrary letters or subsequences
+of letters and predict the next letter in the alphabet.
+
+Firstly, we are changing the framing of the problem. To simplify we will define a maximum
+input sequence length and set it to a small value like 5 to speed up training. This defines the
+maximum length of subsequences of the alphabet which will be drawn for training. In extensions,
+this could just be set to the full alphabet (26) or longer if we allow looping back to the start of
+the sequence. We also need to define the number of random sequences to create, in this case,
+1,000. This too could be more or less. I expect fewer patterns are actually required.
+
+The trained model is evaluated on randomly selected input patterns. This could just as
+easily be new randomly generated sequences of characters. I also believe this could also be a
+linear sequence seeded with A with outputs fed back in as single character inputs.
+
+#LSTM with Variable Length Input Sequences to One Character Output
+import numpy
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
+from keras.utils import np_utils
+from keras.preprocessing.sequence import pad_sequences
+
+#fix random seed for reproducibility
+numpy.random.seed(42)
+
+#define the raw dataset
+alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+#create mapping of characters to integers (0-25) and the reverse
+char_to_int = dict((c, i) for i, c in enumerate(alphabet))
+int_to_char = dict((i, c) for i, c in enumerate(alphabet))
+
+#prepare the dataset of input to output pairs encoded as integers
+num_inputs = 1000
+max_len = 5
+dataX = []
+dataY = []
+for i in range(num_inputs):
+  start = numpy.random.randint(len(alphabet)-2)
+  end = numpy.random.randint(start, min(start+max_len,len(alphabet)-1))
+  sequence_in = alphabet[start:end+1]
+  sequence_out = alphabet[end + 1]
+  dataX.append([char_to_int[char] for char in sequence_in])
+  dataY.append(char_to_int[sequence_out])
+  print(sequence_in, '->', sequence_out)
+
+#convert list of lists to array and pad sequences if needed
+X = pad_sequences(dataX, maxlen=max_len, dtype='float32')
+
+#reshape X to be [samples, time steps, features]
+X = numpy.reshape(X, (X.shape[0], max_len, 1))
+
+#normalize
+X = X / float(len(alphabet))
+
+#one hot encode the output variable
+y = np_utils.to_categorical(dataY)
+
+#create and fit the model
+batch_size = 1
+model = Sequential()
+model.add(LSTM(32, input_shape=(X.shape[1], 1)))
+model.add(Dense(y.shape[1], activation='softmax'))
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.fit(X, y, epochs=500, batch_size=batch_size, verbose=2)
+
+#summarize performance of the model
+scores = model.evaluate(X, y, verbose=0)
+print("Model Accuracy: %.2f%%" % (scores[1]*100))
+
+#demonstrate some model predictions
+for i in range(20):
+  pattern_index = numpy.random.randint(len(dataX))
+  pattern = dataX[pattern_index]
+  x = pad_sequences([pattern], maxlen=max_len, dtype='float32')
+  x = numpy.reshape(x, (1, max_len, 1))
+  x = x / float(len(alphabet))
+  prediction = model.predict(x, verbose=0)
+  index = numpy.argmax(prediction)
+  result = int_to_char[index]
+  seq_in = [int_to_char[value] for value in pattern]
+  print(seq_in, "->", result)
+  
+Results:
+Model Accuracy: 98.90%
+['Q', 'R'] -> S
+['W', 'X'] -> Y
+['W', 'X'] -> Y
+['C', 'D'] -> E
+['E'] -> F
+['S', 'T', 'U'] -> V
+['G', 'H', 'I', 'J', 'K'] -> L
+['O', 'P', 'Q', 'R', 'S'] -> T
+['C', 'D'] -> E
+['O'] -> P
+['N', 'O', 'P'] -> Q
+['D', 'E', 'F', 'G', 'H'] -> I
+['X'] -> Y
+['K'] -> L
+['M'] -> N
+['R'] -> T
+['K'] -> L
+['E', 'F', 'G'] -> H
+['Q'] -> R
+['Q', 'R', 'S'] -> T
+
+We can see that although the model did not learn the alphabet perfectly from the randomly
+generated subsequences, it did very well. The model was not tuned and may require more
+training or a larger network, or both (an exercise for the reader). This is a good natural
+extension to the all sequential input examples in each batch alphabet model learned above in
+that it can handle ad hoc queries, but this time of arbitrary sequence length (up to the max
+length).

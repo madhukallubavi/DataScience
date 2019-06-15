@@ -1,0 +1,85 @@
+In this section we will develop a simple LSTM network to learn sequences of characters from
+Alice in Wonderland. In the next section we will use this model to generate new sequences of
+characters. Let's start of by importing the classes and functions we intend to use to train our
+model.
+
+We can see that the book has just under 150,000 characters and that when converted to
+lowercase that there are only 47 distinct characters in the vocabulary for the network to learn.
+Much more than the 26 in the alphabet. We now need to define the training data for the
+network. There is a lot of fexibility in how you choose to break up the text and expose it to
+the network during training. In this tutorial we will split the book text up into subsequences
+with a fixed length of 100 characters, an arbitrary length. We could just as easily split the data
+up by sentences and pad the shorter sequences and truncate the longer ones.
+
+#Small LSTM network to Generate Text for Alice in Wonderland
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, LSTM
+from keras.callbacks import ModelCheckpoint
+from keras.utils import np_utils
+
+#load ASCII text and convert to lowercase
+filename = "alice_in_wonderland.txt"
+raw_text = open(filename).read()
+raw_text = raw_text.lower()
+
+#create mapping of unique chars to integers
+chars = sorted(list(set(raw_text)))
+char_to_int = dict((c, i) for i, c in enumerate(chars))
+
+#summarize loaded data
+n_chars = len(raw_text)
+n_vocab = len(chars)
+print("Total Characters: ", n_chars)
+print("Total Vocab: ", n_vocab)
+
+#Prepare dataset of input to output pairs encoded as integers
+seq_length = 100
+dataX =[]
+dataY =[]
+for i in range(0, n_chars - seq_length, 1):
+  seq_in = raw_text[i:i + seq_length]
+  seq_out = raw_text[i + seq_length]
+  dataX.append([char_to_int[char] for char in seq_in])
+  dataY.append(char_to_int[seq_out])
+n_patterns = len(dataX)
+print("Total Patterns: ", n_patterns)
+
+#reshape X to be [samples, time steps, features]
+X = np.reshape(dataX, (n_patterns, seq_length, 1))
+
+#normalize
+X = X/float(n_vocab)
+
+#one hot encode the output variable
+Y = np_utils.to_categorical(dataY)
+
+#define LSTM model
+model = Sequential()
+model.add(LSTM(256, input_shape=(X.shape[1], X.shape[2])))
+model.add(Dropout(0.2))
+model.add(Dense(Y.shape[1], activation='sigmoid'))
+model.compile(loss='categorical_crossentropy', optimizer='adam')
+
+#define checkpoint
+filepath = 'weights-improvement-{epoch:02d}-{loss:.4f}.hdf5'
+checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, 
+    save_best_only=True, mode='min')
+callbacks_list = [checkpoint]
+
+#fit model
+model.fit(X, Y, epochs=20, batch_size=128, callbacks=callbacks_list)
+
+Results:
+Epoch 00020: loss improved from 2.37817 to 2.36084, saving model to weights-improvement-20-2.3608.hdf5
+
+You will see different results because of the stochastic nature of the model, and because it is
+hard to fix the random seed for LSTM models to get 100% reproducible results. This is not a
+concern for this generative model. After running the example, you should have a number of
+weight checkpoint files in the local directory. We can delete them all except the one with the
+smallest loss value. For example, when we ran this example, below was the checkpoint with the
+smallest loss that we achieved.
+
+The network loss decreased almost every epoch and I expect the network could benefit from
+training for many more epochs. In the next section we will look at using this model to generate
+new text sequences.

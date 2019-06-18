@@ -1,0 +1,31 @@
+An image can be flipped by calling the flip() function and passing in a method such as
+FLIP LEFT RIGHT for a horizontal flip or FLIP TOP BOTTOM for a vertical flip. Other flips are
+also available. The example below creates both horizontal and vertical flipped versions of the
+image.
+
+#create flipped versions of an image
+from PIL import Image
+import matplotlib.pyplot as plt
+
+#load image
+image = Image.open('opera_house.jpg')
+
+#horizontal flip
+hoz_flip = image.transpose(Image.FLIP_LEFT_RIGHT)
+
+#vertical flip
+ver_flip = image.transpose(Image.FLIP_TOP_BOTTOM)
+
+#plot all three images using matplotlib
+plt.subplot(311)
+plt.imshow(image)
+plt.subplot(312)
+plt.imshow(hoz_flip)
+plt.subplot(313)
+plt.imshow(ver_flip)
+plt.show()
+
+Running the example loads the photograph and creates horizontally and vertically flipped
+versions of the photograph, then plots all three versions as subplots using Matplotlib. You will
+note that the imshow() function can plot the Image object directly without having to convert
+it to a NumPy array.

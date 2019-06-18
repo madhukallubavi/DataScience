@@ -1,0 +1,66 @@
+Standardization is a data scaling technique that assumes that the distribution of the data is
+Gaussian and shifts the distribution of the data to have a mean of zero and a standard deviation
+of one. Data with this distribution is referred to as a standard Gaussian. It can be beneficial
+when training neural networks as the dataset sums to zero and the inputs are small values in
+the rough range of about -3.0 to 3.0 (e.g. 99.7 of the values will fall within three standard
+deviations of the mean). Standardization of images is achieved by subtracting the mean pixel
+value and dividing the result by the standard deviation of the pixel values. The mean and
+standard deviation statistics can be calculated on the training dataset, and as discussed in the
+previous section, Keras refers to this as feature-wise.
+
+#Standardizing image with MNIST dataset
+from keras.datasets import mnist
+from keras.preprocessing.image import ImageDataGenerator
+
+#load dataset
+(trainX, trainY), (testX, testY) = mnist.load_data()
+
+#reshape dataset to have a single channel
+width, height, channels = trainX.shape[1], trainX.shape[2], 1
+trainX = trainX.reshape((trainX.shape[0], width, height, channels))
+testX = testX.reshape((testX.shape[0], width, height, channels))
+
+#report pixel means and stds
+print('Statistics train=%.3f (%.3f), test=%.3f (%.3f)' % (trainX.mean(), trainX.std(),
+    testX.mean(), testX.std()))
+
+#create generator that centers pixel values
+datagen = ImageDataGenerator(featurewise_center=True, featurewise_std_normalization=True)
+
+#calculate mean on training dataset
+datagen.fit(trainX)
+print('Data Generator mean=%.3f, std=%.3f' % (datagen.mean, datagen.std))
+
+#demonstrate effect on single batch of samples
+iterator = datagen.flow(trainX, trainY, batch_size=64)
+
+#get a batch
+batchX, batchY = iterator.next()
+
+#pixel stats in batch
+print(batchX.shape, batchX.mean(), batchX.std())
+
+#demonstrate effect on entire training dataset
+iterator = datagen.flow(trainX, trainY, batch_size=len(trainX), shuffle=False)
+
+#get a batch
+batchX, batchY = iterator.next()
+
+#pixel stats in batch
+print(batchX.shape, batchX.mean(), batchX.std())
+
+Results:
+Statistics train=33.318 (78.567), test=33.791 (79.172)
+Data Generator mean=33.318, std=78.567
+(64, 28, 28, 1) 0.018286878 1.0204103
+(60000, 28, 28, 1) -3.4560264e-07 0.9999998
+
+Running the example first reports the mean and standard deviation of pixel values in the
+train and test datasets. The data generator is then configured for feature-wise standardization
+and the statistics are calculated on the training dataset, matching what we would expect when
+the statistics are calculated manually. A single batch of 64 standardized images is then retrieved
+and we can confirm that the mean and standard deviation of this small sample is close to the
+expected standard Gaussian. The test is then repeated on the entire training dataset and we
+can confirm that the mean is indeed a very small value close to 0.0 and the standard deviation
+is a value very close to 1.0.
+Note: your statistics may vary slightly due to a different random batch of images being selected.

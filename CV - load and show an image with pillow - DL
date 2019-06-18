@@ -1,0 +1,33 @@
+Images are typically in PNG or JPEG format and can be loaded directly using the open()
+function on Image class. This returns an Image object that contains the pixel data for the
+image as well as details about the image. The Image class is the main workhorse for the Pillow
+library and provides a ton of properties about the image as well as functions that allow you to
+manipulate the pixels and format of the image.
+
+The format property on the image will report the image format (e.g. JPEG), the mode will
+report the pixel channel format (e.g. RGB or CMYK), and the size will report the dimensions
+of the image in pixels (e.g. 640 × 480). The show() function will display the image using your
+operating systems default application. The example below demonstrates how to load and show
+an image using the Image class in the Pillow library.
+
+#load and show an image with pillow
+from PIL import Image
+
+#load image
+image = Image.open('opera_house.jpg')
+
+#summarize some details about image
+print(image.format)
+print(image.mode)
+print(image.size)
+
+#show image
+image.show()
+
+Results:
+JPEG
+RGB
+(640, 360)
+
+Running the example will first load the image, report the format, mode, and size, then show
+the image on your desktop.

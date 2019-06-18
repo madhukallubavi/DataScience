@@ -30,3 +30,8 @@ Results:
 
 Running the example loads the image, reports the shape of the image, then resizes it to have
 a width and height of 200 pixels.
+
+The size of the image is shown and we can see that the wide photograph has been compressed
+into a square, although all of the features are still quite visible and obvious. Standard resampling
+algorithms are used to invent or remove pixels when resizing, and you can specify a technique,
+although default is a bicubic resampling algorithm that suits most general applications.

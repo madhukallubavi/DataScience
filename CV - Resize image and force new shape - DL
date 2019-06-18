@@ -1,0 +1,32 @@
+We may not want to preserve the aspect ratio, and instead, we may want to force the pixels
+into a new shape. This can be achieved using the resize() function that allows you to specify
+the width and height in pixels and the image will be reduced or stretched to fit the new shape.
+The example below demonstrates how to resize a new image and ignore the original aspect ratio.
+
+#Resize image and force a new shape
+from PIL import Image
+import matplotlib.pyplot as plt
+
+#load image
+image = Image.open('opera_house.jpg')
+
+#report size of image
+print(image.size)
+
+#resize image and ignore original aspect ratio
+img_resized = image.resize((200, 200))
+
+#report size of thumbnail
+print(img_resized.size)
+
+#show image
+img_resized.show()
+plt.imshow(img_resized)
+plt.show
+
+Results:
+(640, 360)
+(200, 200)
+
+Running the example loads the image, reports the shape of the image, then resizes it to have
+a width and height of 200 pixels.

@@ -1,0 +1,64 @@
+Another popular pixel scaling method is to calculate the mean pixel value across the entire
+training dataset, then subtract it from each image. This is called centering and has the effect
+of centering the distribution of pixel values on zero: that is, the mean pixel value for centered
+images will be zero. The ImageDataGenerator class refers to centering that uses the mean
+calculated on the training dataset as feature-wise centering. It requires that the statistic is
+calculated on the training dataset prior to scaling.
+
+#Centering image dataset
+from keras.datasets import mnist
+from keras.preprocessing.image import ImageDataGenerator
+
+#load dataset
+(trainX, trainY), (testX, testY) = mnist.load_data()
+
+#reshape dataset to have single channel
+width, height, channels = trainX.shape[1], trainX.shape[2], 1
+trainX = trainX.reshape((trainX.shape[0], width, height, channels))
+testX = testX.reshape((testX.shape[0], width, height, channels))
+
+#report per-image mean
+print('Means train=%.3f, test=%.3f' % (trainX.mean(), testX.mean()))
+
+#create generator that centers pixel values
+datagen = ImageDataGenerator(featurewise_center=True)
+
+#calculate mean on training dataset
+datagen.fit(trainX)
+print('data Generator Mean: %.3f' % datagen.mean)
+
+#demonstrate effect on single batch of samples
+iterator = datagen.flow(trainX, trainY, batch_size=64)
+
+#get a batch
+batchX, batchY = iterator.next()
+
+#mean pixel value in batch
+print(batchX.shape, batchX.mean())
+
+#demonstrate effect on entire training dataset
+iterator = datagen.flow(trainX, trainY, batch_size=len(trainX), shuffle=False)
+
+#get a batch
+batchX, batchY = iterator.next()
+
+#mean pixel value in batch
+print(batchX.shape, batchX.mean())
+
+Results:
+Means train=33.318, test=33.791
+data Generator Mean: 33.318
+(64, 28, 28, 1) 0.7564481
+(60000, 28, 28, 1) -1.9512918e-05
+
+Running the example first reports the mean pixel value for the train and test datasets. The
+MNIST dataset only has a single channel because the images are black and white (grayscale),
+but if the images were color, the mean pixel values would be calculated across all channels in all
+images in the training dataset, i.e. there would not be a separate mean value for each channel.
+The ImageDataGenerator is fit on the training dataset and we can confirm that the mean pixel
+value matches our own manual calculation. A single batch of centered images is retrieved and
+we can confirm that the mean pixel value is a small-ish value close to zero. The test is repeated
+using the entire training dataset as the batch size, and in this case, the mean pixel value for the
+scaled dataset is a number very close to zero, confirming that centering is having the desired
+effect. Note: your statistics may vary slightly due to a different random batch of images being
+selected.

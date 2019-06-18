@@ -1,0 +1,34 @@
+The example below calculates the mean and standard deviation of the loaded image per-channel,
+then uses these statistics to standardize the pixels separately in each channel.
+
+#Per-Channel pixel standardization (Local)
+from numpy import asarray
+from PIL import Image
+
+#load image
+image = Image.open('sydney_bridge.jpg')
+pixels = asarray(image)
+
+#convert from integers to floats
+pixels = pixels.astype('float32')
+
+#calculate pre-channel means and std
+means = pixels.mean(axis=(0,1), dtype='float64')
+stds = pixels.std(axis=(0,1), dtype='float64')
+print('Means: %s, Stds: %s' % (means, stds))
+
+#pre-channel standardization of pixels
+pixels = (pixels-means)/stds
+
+#confirm it had desired effect
+means = pixels.mean(axis=(0,1), dtype='float64')
+stds = pixels.std(axis=(0,1), dtype='float64')
+print('Means: %s, Stds: %s' % (means, stds))
+
+Results:
+Means: [158.43480487 159.58662109 164.9829202  255.], Stds: [70.63586854 70.73750037 70.1171148   0.]
+Means: [-3.98300453e-13 -1.93157989e-13  3.25967320e-13], Stds: [ 1.  1.  1.]
+
+Running the example first calculates and reports the means and standard deviation of
+the pixel values in each channel. The pixel values are then standardized and statistics are
+re-calculated, confirming the new zero-mean and unit standard deviation.

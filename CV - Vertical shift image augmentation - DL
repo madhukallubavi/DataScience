@@ -1,0 +1,41 @@
+The same example updated to perform vertical shifts of the image via the height shift range
+argument, in this case specifying the percentage of the image to shift as 0.5 the height of the
+image.
+
+#Vertical shift image augmentation
+from numpy import expand_dims
+from keras.preprocessing.image import load_img, img_to_array, ImageDataGenerator
+from matplotlib import pyplot as plt
+
+#load image
+img = load_img('bird.jpg')
+
+#convert to numpy array
+data = img_to_array(img)
+
+#expand dimension to one sample
+samples = expand_dims(data, 0)
+
+#create image data augmentation generator
+datagen = ImageDataGenerator(height_shift_range=0.5)
+
+#prepare iterator
+it = datagen.flow(samples, batch_size=1)
+
+#generate samples and plot
+for i in range(9):
+  #define subplot
+  plt.subplot(330 + 1 + i)
+  #generate batch of images
+  batch = it.next()
+  #convert to unsigned integers for viewing
+  image = batch[0].astype('uint32')
+  #plot raw pixel data
+  plt.imshow(image)
+#show the figure
+plt.show()
+
+Running the example creates a plot of images augmented with random positive and negative
+vertical shifts. We can see that both horizontal and vertical positive and negative shifts probably
+make sense for the chosen photograph, but in some cases, the replicated pixels at the edge of
+the image may not make sense to a model.

@@ -1,0 +1,85 @@
+We can expand the bump detection example in the previous section to a vertical line detector in
+a two-dimensional image. Again, we can constrain the input, in this case to a square 8 × 8 pixel
+input image with a single channel (e.g. grayscale) with a single vertical line in the middle.
+
+The input to a Conv2D layer must be four-dimensional. The first dimension defines the
+samples; in this case, there is only a single sample. The second dimension defines the number of
+rows; in this case, eight. The third dimension defines the number of columns, again eight in this
+case, and finally the number of channels, which is one in this case. Therefore, the input must
+have the four-dimensional shape [samples, columns, rows, channels] or [1, 8, 8, 1] in
+this case.
+
+We will define the Conv2D layer with a single filter as we did in the previous section with
+the Conv1D example. The filter will be two-dimensional and square with the shape 3 × 3. The
+layer will expect input samples to have the shape [columns, rows, channels] or [8,8,1].
+
+#Calculation 2D Convolutions
+from numpy import asarray
+from keras.models import Sequential
+from keras.layers import Conv2D
+
+#define input data
+data = [[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0]]
+data = asarray(data)
+data = data.reshape(1, 8, 8, 1)
+
+#create model
+model = Sequential()
+model.add(Conv2D(1, (3,3), input_shape=(8, 8, 1)))
+
+#define a vertical line detector
+detector = [[[[0]],[[1]],[[0]]],
+[[[0]],[[1]],[[0]]],
+[[[0]],[[1]],[[0]]]]
+weights = [asarray(detector), asarray([0.0])]
+
+#store the weights in the model
+model.set_weights(weights)
+
+#confirm they were stored
+print(model.get_weights())
+
+#apply filter to input data
+yhat = model.predict(data)
+for r in range(yhat.shape[1]):
+  #print each column in the row
+  print([yhat[0,r,c,0] for c in range(yhat.shape[2])])
+
+Results:
+[array([[[[0.]],
+
+        [[1.]],
+
+        [[0.]]],
+
+
+       [[[0.]],
+
+        [[1.]],
+
+        [[0.]]],
+
+
+       [[[0.]],
+
+        [[1.]],
+
+        [[0.]]]], dtype=float32), array([0.], dtype=float32)]
+[0.0, 0.0, 3.0, 3.0, 0.0, 0.0]
+[0.0, 0.0, 3.0, 3.0, 0.0, 0.0]
+[0.0, 0.0, 3.0, 3.0, 0.0, 0.0]
+[0.0, 0.0, 3.0, 3.0, 0.0, 0.0]
+[0.0, 0.0, 3.0, 3.0, 0.0, 0.0]
+[0.0, 0.0, 3.0, 3.0, 0.0, 0.0]
+
+Running the example first confirms that the handcrafted filter was correctly defined in the
+layer weights. Next, the calculated feature map is printed. We can see from the scale of the
+numbers that indeed the filter has detected the single vertical line with strong activation in the
+middle of the feature map.

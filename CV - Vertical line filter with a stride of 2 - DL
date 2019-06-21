@@ -1,0 +1,70 @@
+We can see that there are only three valid applications of the 3 × 3 filters to the 8 × 8 input
+image with a stride of two. This will be the same in the vertical dimension. This has the effect
+of applying the filter in such a way that the normal feature map output (6×6) is down-sampled
+so that the size of each dimension is reduced by half (3 × 3), resulting in 1
+4 the number of pixels (36 pixels down to 9). The stride can be specified in Keras on the Conv2D layer via the
+stride argument and specified as a tuple with height and width. The example demonstrates
+the application of our manual vertical line filter on the 8 × 8 input image with a convolutional
+layer that has a stride of two.
+
+#Vertical line filter with a stride of 2
+from numpy import asarray
+from keras.models import Sequential
+from keras.layers import Conv2D
+
+#define input data
+data = [[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0]]
+data = asarray(data)
+data = data.reshape(1, 8, 8, 1)
+
+#create model
+model = Sequential()
+model.add(Conv2D(1, (3,3), strides=(2, 2), input_shape=(8, 8, 1)))
+
+#summarize model
+model.summary()
+
+#define a vertical line detector
+detector = [[[[0]],[[1]],[[0]]],
+[[[0]],[[1]],[[0]]],
+[[[0]],[[1]],[[0]]]]
+weights = [asarray(detector), asarray([0.0])]
+
+#store the weights in the model
+model.set_weights(weights)
+
+#apply filter to input data
+yhat = model.predict(data)
+
+#enumerate rows
+for r in range(yhat.shape[1]):
+  #print each column in the row
+  print([yhat[0,r,c,0] for c in range(yhat.shape[2])])
+
+Results:
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+conv2d_10 (Conv2D)           (None, 3, 3, 1)           10        
+=================================================================
+Total params: 10
+Trainable params: 10
+Non-trainable params: 0
+_________________________________________________________________
+[0.0, 3.0, 0.0]
+[0.0, 3.0, 0.0]
+[0.0, 3.0, 0.0]
+
+Running the example, we can see from the summary of the model that the shape of the
+output feature map will be 3 × 3. Applying the handcrafted filter to the input image and
+printing the resulting activation feature map, we can see that, indeed, the filter still detected
+the vertical line, and can represent this finding with less information. Downsampling may be
+desirable in some cases where deeper knowledge of the filters used in the model or of the model
+architecture allows for some compression in the resulting feature maps.

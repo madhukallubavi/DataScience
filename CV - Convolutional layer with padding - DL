@@ -1,0 +1,31 @@
+The addition of pixels to the edge of the image is called padding. In Keras, this is specified
+via the padding argument on the Conv2D layer, which has the default value of ‘valid’ (no
+padding). This means that the filter is applied only to valid ways to the input. The padding
+value of ‘same’ calculates and adds the padding required to the input image (or feature map)
+to ensure that the output has the same shape as the input. The example below adds padding to
+the convolutional layer in our worked example.
+
+#Convolutional layer with padding
+from keras.models import Sequential
+from keras.layers import Conv2D
+
+#create model
+model = Sequential()
+model.add(Conv2D(1, (3,3), padding='same', input_shape=(8, 8, 1)))
+
+#summarize model
+model.summary()
+
+Results:
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+conv2d_6 (Conv2D)            (None, 8, 8, 1)           10        
+=================================================================
+Total params: 10
+Trainable params: 10
+Non-trainable params: 0
+_________________________________________________________________
+
+Running the example demonstrates that the shape of the output feature map is the same as
+the input image: that the padding had the desired effect.

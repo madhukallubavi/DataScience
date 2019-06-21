@@ -1,0 +1,73 @@
+Maximum pooling, or max pooling, is a pooling operation that calculates the maximum, or
+largest, value in each patch of each feature map. The results are downsampled or pooled feature
+maps that highlight the most present feature in the patch, not the average presence of the
+features, as in the case of average pooling. This has been found to work better in practice than
+average pooling for computer vision tasks like image classification.
+
+It just so happens that the chosen line detector image and feature map produce the same
+output when downsampled with average pooling and maximum pooling. The maximum pooling
+operation can be added to the worked example by adding the MaxPooling2D layer provided by
+the Keras API.
+
+#Max Pooling Layer
+from numpy import asarray
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D
+
+#define input data
+data = [[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 0, 0, 0]]
+data = asarray(data)
+data = data.reshape(1, 8, 8, 1)
+
+#create model
+model = Sequential()
+model.add(Conv2D(1, (3,3), activation='relu', input_shape=(8, 8, 1)))
+model.add(MaxPooling2D())
+
+#summarize model
+model.summary()
+
+#define a vertical line detector
+detector = [[[[0]],[[1]],[[0]]],
+[[[0]],[[1]],[[0]]],
+[[[0]],[[1]],[[0]]]]
+weights = [asarray(detector), asarray([0.0])]
+
+#store the weights in the model
+model.set_weights(weights)
+
+#apply filter to input data
+yhat = model.predict(data)
+
+#enumerate rows
+for r in range(yhat.shape[1]):
+  #print each column in the row
+  print([yhat[0,r,c,0] for c in range(yhat.shape[2])])
+
+Results:
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+conv2d_6 (Conv2D)            (None, 6, 6, 1)           10        
+_________________________________________________________________
+max_pooling2d_2 (MaxPooling2 (None, 3, 3, 1)           0         
+=================================================================
+Total params: 10
+Trainable params: 10
+Non-trainable params: 0
+_________________________________________________________________
+[0.0, 3.0, 0.0]
+[0.0, 3.0, 0.0]
+[0.0, 3.0, 0.0]
+
+Running the example first summarizes the model. We can see, as we might expect by now,
+that the output of the max pooling layer will be a single feature map with each dimension
+halved, with the shape (3,3). Applying the max pooling results in a new feature map that still
+detects the line, although in a downsampled manner.

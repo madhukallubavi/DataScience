@@ -1,0 +1,34 @@
+The addition of padding allows the development of very deep models in such a way that the
+feature maps do not dwindle away to nothing. The example below demonstrates this with three
+stacked convolutional layers.
+
+#Deep cnn with padding
+from keras.models import Sequential
+from keras.layers import Conv2D
+
+#create model
+model = Sequential()
+model.add(Conv2D(1, (3,3), padding='same', input_shape=(8, 8, 1)))
+model.add(Conv2D(1, (3,3), padding='same'))
+model.add(Conv2D(1, (3,3), padding='same'))
+
+#summarize model
+model.summary()
+
+Results:
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+conv2d_7 (Conv2D)            (None, 8, 8, 1)           10        
+_________________________________________________________________
+conv2d_8 (Conv2D)            (None, 8, 8, 1)           10        
+_________________________________________________________________
+conv2d_9 (Conv2D)            (None, 8, 8, 1)           10        
+=================================================================
+Total params: 30
+Trainable params: 30
+Non-trainable params: 0
+_________________________________________________________________
+
+Running the example, we can see that with the addition of padding, the shape of the output
+feature maps remains fixed at 8 × 8 even three layers deep.

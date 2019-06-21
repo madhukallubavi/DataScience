@@ -1,14 +1,15 @@
-Before we look at some examples of pooling layers and their effects, let’s develop a small example
-of an input image and convolutional layer to which we can later add and evaluate pooling layers.
-In this example, we define a single input image or sample that has one channel and is an 8 pixel
-by 8 pixel square with all 0 values and a two-pixel wide vertical line in the center.
+On two-dimensional feature maps, pooling is typically applied in 2 × 2 patches of the feature
+map with a stride of (2,2). Average pooling involves calculating the average for each patch of
+the feature map. This means that each 2 × 2 square of the feature map is downsampled to the
+average value in the square. For example, the output of the line detector convolutional filter
+in the previous section was a 6 × 6 feature map. We can look at applying the average pooling
+operation to the first line of patches of that feature map manually. The first line of pooling
+input (first two rows and six columns) of the output feature map were as follows:
 
-Next, we can define a model that expects input samples to have the shape (8, 8, 1) and has
-a single hidden convolutional layer with a single filter with the shape of 3 pixels by 3 pixels.
-A rectified linear activation function, or ReLU for short, is then applied to each value in the
-feature map. This is a simple and effective nonlinearity, that in this case will not change the
-values in the feature map, but is present because we will later add subsequent pooling layers
-and pooling is added after the nonlinearity applied to the feature maps, e.g. a best practice.
+We can confirm this by updating the example from the previous section to use average
+pooling. This can be achieved in Keras by using the AveragePooling2D layer. The default
+pool size (e.g. like the kernel size or filter size) of the layer is (2,2) and the default strides is
+None, which in this case means using the pool size as the strides, which will be (2,2).
 
 #Average Pooling Layer
 from numpy import asarray
@@ -68,9 +69,9 @@ _________________________________________________________________
 [0.0, 3.0, 0.0]
 [0.0, 3.0, 0.0]
 
-Running the example first summarizes the structure of the model. Of note is that the single
-hidden convolutional layer will take the 8 × 8 pixel input image and will produce a feature map
-with the dimensions of 6 × 6. We can also see that the layer has 10 parameters: that is nine
-weights for the filter (3 × 3) and one weight for the bias. Finally, the single feature map is
-printed. We can see from reviewing the numbers in the 6 × 6 matrix that indeed the manually
-specified filter detected the vertical line in the middle of our input image.
+Running the example first summarizes the model. We can see from the model summary that
+the input to the pooling layer will be a single feature map with the shape (6,6) and that the
+output of the average pooling layer will be a single feature map with each dimension halved,
+with the shape (3,3). Applying the average pooling results in a new feature map that still
+detects the line, although in a downsampled manner, exactly as we expected from calculating
+the operation manually.

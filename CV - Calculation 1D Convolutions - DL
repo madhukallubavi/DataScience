@@ -1,0 +1,58 @@
+The input to Keras must be three dimensional for a 1D convolutional layer. The first
+dimension refers to each input sample; in this case, we only have one sample. The second
+dimension refers to the length of each sample; in this case, the length is eight. The third
+dimension refers to the number of channels in each sample; in this case, we only have a single
+channel. Therefore, the shape of the input array will be [1, 8, 1].
+
+We will define a model that expects input samples to have the shape [8, 1]. The model will
+have a single filter with the shape of 3, or three elements wide. Keras refers to the shape of the
+filter as the kernel size.
+
+By default, the filters in a convolutional layer are initialized with random weights. In this
+contrived example, we will manually specify the weights for the single filter. We will define a
+filter that is capable of detecting bumps, that is a high input value surrounded by low input
+values, as we defined in our input example.
+
+#Calculation 1D Convolutions
+from numpy import asarray
+from keras.models import Sequential
+from keras.layers import Conv1D
+
+#Define input data
+data = asarray([0,0,0,1,1,0,0,0])
+data = data.reshape(1,8,1)
+
+#create model
+model = Sequential()
+model.add(Conv1D(filters=1, kernel_size=3, input_shape=(8,1)))
+
+#define a vertical line detector
+weights = [asarray([[[0]], [[1]], [[0]]]), asarray([0.0])]
+
+#store weights in model
+model.set_weights(weights)
+
+#confirm they were stored
+print(model.get_weights())
+
+#apply filter to input data
+yhat = model.predict(data)
+print(yhat)
+
+Results:
+[array([[[0.]],
+
+       [[1.]],
+
+       [[0.]]], dtype=float32), array([0.], dtype=float32)]
+[[[0.]
+  [0.]
+  [1.]
+  [1.]
+  [0.]
+  [0.]]]
+  
+Running the example first prints the weights of the network; that is the confirmation that
+our handcrafted filter was set in the model as we expected. Next, the filter is applied to the
+input pattern and the feature map is calculated and displayed. We can see from the values of
+the feature map that the bump was detected correctly.

@@ -1,0 +1,61 @@
+A convolutional neural network with VGG-blocks is a sensible starting point when developing
+a new model from scratch as it is easy to understand, easy to implement, and very effective at
+extracting features from images. We can generalize the specification of a VGG-block as one or
+more convolutional layers with the same number of filters and a filter size of 3 × 3, a stride of
+1 × 1, same padding so the output size is the same as the input size for each filter, and the use
+of a rectified linear activation function. These layers are then followed by a max pooling layer
+with a size of 2 × 2 and a stride of the same dimensions. We can define a function to create a
+VGG-block using the Keras functional API with a given number of convolutional layers and
+with a given number of filters per layer.
+
+#Creating CNN model with VGG block
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Conv2D
+from keras.layers import MaxPooling2D
+from keras.utils import plot_model
+
+#function for creating a VGG block
+def vgg_block(layer_in, n_filters, n_conv):
+  #add convolutional layers
+  for _ in range(n_conv):
+    layer_in = Conv2D(n_filters, (3,3), padding='same', activation='relu')(layer_in)
+  #add max pooling layer
+  layer_in = MaxPooling2D((2,2), strides=(2,2))(layer_in)
+  return layer_in
+
+#define model input
+visible = Input(shape=(256, 256, 3))
+
+#add vgg module
+layer = vgg_block(visible, 64, 2)
+
+#create model
+model = Model(inputs=visible, outputs=layer)
+
+#summarize model
+model.summary()
+
+#plot model architecture
+plot_model(model, show_shapes=True, to_file='vgg_block.png')
+
+Results:
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_3 (InputLayer)         (None, 256, 256, 3)       0         
+_________________________________________________________________
+conv2d_5 (Conv2D)            (None, 256, 256, 64)      1792      
+_________________________________________________________________
+conv2d_6 (Conv2D)            (None, 256, 256, 64)      36928     
+_________________________________________________________________
+max_pooling2d_3 (MaxPooling2 (None, 128, 128, 64)      0         
+=================================================================
+Total params: 38,720
+Trainable params: 38,720
+Non-trainable params: 0
+_________________________________________________________________
+
+Running the example creates the model and summarizes the structure. We can see that,
+as intended, the model added a single VGG block with two convolutional layers each with 64
+filters, followed by a max pooling layer.

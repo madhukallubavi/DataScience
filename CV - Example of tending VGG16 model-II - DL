@@ -1,0 +1,84 @@
+Alternately, we may wish to use the VGG16 model layers, but train the new layers of the
+model without updating the weights of the VGG16 layers. This will allow the new output
+layers to learn to interpret the learned features of the VGG16 model. This can be achieved by
+setting the trainable property on each of the layers in the loaded VGG model to False prior
+to training.
+
+#Example of tending VGG16 model
+from keras.applications.vgg16 import VGG16
+from keras.models import Model
+from keras.layers import Dense, Flatten
+
+#load model without classifier layers
+model = VGG16(include_top=False, input_shape=(300, 300, 3))
+
+#mark loaded layers as not trainable
+for layer in model.layers:
+  layer.trainable = False
+
+#add new classifier layers
+flat1 = Flatten()(model.outputs)
+class1 = Dense(1024, activation='relu')(flat1)
+output = Dense(10, activation='softmax')(class1)
+
+#define new model
+model = Model(inputs=model.inputs, outputs=output)
+
+#summarize model
+model.summary()
+
+Results:
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_17 (InputLayer)        (None, 300, 300, 3)       0         
+_________________________________________________________________
+block1_conv1 (Conv2D)        (None, 300, 300, 64)      1792      
+_________________________________________________________________
+block1_conv2 (Conv2D)        (None, 300, 300, 64)      36928     
+_________________________________________________________________
+block1_pool (MaxPooling2D)   (None, 150, 150, 64)      0         
+_________________________________________________________________
+block2_conv1 (Conv2D)        (None, 150, 150, 128)     73856     
+_________________________________________________________________
+block2_conv2 (Conv2D)        (None, 150, 150, 128)     147584    
+_________________________________________________________________
+block2_pool (MaxPooling2D)   (None, 75, 75, 128)       0         
+_________________________________________________________________
+block3_conv1 (Conv2D)        (None, 75, 75, 256)       295168    
+_________________________________________________________________
+block3_conv2 (Conv2D)        (None, 75, 75, 256)       590080    
+_________________________________________________________________
+block3_conv3 (Conv2D)        (None, 75, 75, 256)       590080    
+_________________________________________________________________
+block3_pool (MaxPooling2D)   (None, 37, 37, 256)       0         
+_________________________________________________________________
+block4_conv1 (Conv2D)        (None, 37, 37, 512)       1180160   
+_________________________________________________________________
+block4_conv2 (Conv2D)        (None, 37, 37, 512)       2359808   
+_________________________________________________________________
+block4_conv3 (Conv2D)        (None, 37, 37, 512)       2359808   
+_________________________________________________________________
+block4_pool (MaxPooling2D)   (None, 18, 18, 512)       0         
+_________________________________________________________________
+block5_conv1 (Conv2D)        (None, 18, 18, 512)       2359808   
+_________________________________________________________________
+block5_conv2 (Conv2D)        (None, 18, 18, 512)       2359808   
+_________________________________________________________________
+block5_conv3 (Conv2D)        (None, 18, 18, 512)       2359808   
+_________________________________________________________________
+block5_pool (MaxPooling2D)   (None, 9, 9, 512)         0         
+_________________________________________________________________
+flatten_7 (Flatten)          (None, 41472)             0         
+_________________________________________________________________
+dense_13 (Dense)             (None, 1024)              42468352  
+_________________________________________________________________
+dense_14 (Dense)             (None, 10)                10250     
+=================================================================
+Total params: 57,193,290
+Trainable params: 42,478,602
+Non-trainable params: 14,714,688
+_________________________________________________________________
+
+Running the example defines the new model ready for training and summarizes the model architecture. 
+We can see that we have flattened the output of the last pooling layer and added our new fully connected layers.

@@ -1,0 +1,150 @@
+The Fashion MNIST dataset was developed as a response to the wide use of the MNIST dataset,
+that has been effectively solved given the use of modern convolutional neural networks. Fashion-
+MNIST was proposed to be a replacement for MNIST, and although it has not been solved,
+it is possible to routinely achieve error rates of 10% or less. Like MNIST, it can be a useful
+starting point for developing and practicing a methodology for solving image classification using
+convolutional neural networks.
+
+The first step is to develop a baseline model. This is critical as it both involves developing
+the infrastructure for the test harness so that any model we design can be evaluated on the
+dataset, and it establishes a baseline in model performance on the problem, by which all
+improvements can be compared. The design of the test harness is modular, and we can develop
+a separate function for each piece. This allows a given aspect of the test harness to be modified
+or inter-changed, if we desire, separately from the rest. We can develop this test harness with
+five key elements. They are the loading of the dataset, the preparation of the dataset, the
+definition of the model, the evaluation of the model, and the presentation of results.
+
+#Baseline CNN model for fashion MNIST
+from numpy import mean, std
+from matplotlib import pyplot as plt
+from sklearn.model_selection import KFold
+from keras.datasets import fashion_mnist
+from keras.utils import to_categorical
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
+from keras.optimizers import SGD
+
+#load train and test dataset
+def load_dataset():
+  #load dataset
+  (trainX, trainY), (testX, testY) = fashion_mnist.load_data()
+  #reshape dataset to have a single channel
+  trainX = trainX.reshape((trainX.shape[0], 28, 28, 1))
+  testX = testX.reshape((testX.shape[0], 28, 28, 1))
+  #one hot encode target values
+  trainY = to_categorical(trainY)
+  testY = to_categorical(testY)
+  return trainX, trainY, testX, testY
+
+#scale pixels
+def prep_pixels(train, test):
+  #convert from integers to floats
+  train_norm = train.astype('float32')
+  test_norm = test.astype('float32')
+  #normalize to range 0-1
+  train_norm = train_norm / 255.0
+  test_norm = test_norm / 255.0
+  #return normalized images
+  return train_norm, test_norm
+
+#define CNN model
+def define_model():
+  model = Sequential()
+  model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', input_shape=(28, 28, 1)))
+  model.add(MaxPooling2D((2, 2)))
+  model.add(Flatten())
+  model.add(Dense(100, activation='relu', kernel_initializer='he_uniform'))
+  model.add(Dense(10, activation='softmax'))
+  #compile model
+  opt = SGD(lr=0.01, momentum=0.9)
+  model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+  return model
+
+#evaluate a model using k-fold cross-validation
+def evaluate_model(model, dataX, dataY, n_folds=5):
+  scores, histories = list(), list()
+  #prepare cross validation
+  kfold = KFold(n_folds, shuffle=True, random_state=1)
+  #enumerate splits
+  for train_ix, test_ix in kfold.split(dataX):
+    #select rows for train and test
+    trainX, trainY, testX, testY = dataX[train_ix], dataY[train_ix], dataX[test_ix], dataY[test_ix]
+    #fit model
+    history = model.fit(trainX, trainY, epochs=10, batch_size=32, validation_data=(testX, testY), verbose=0)
+    #evaluate model
+    _, acc = model.evaluate(testX, testY, verbose=0)
+    print('> %.3f' % (acc * 100.0))
+    #append scores
+    scores.append(acc)
+    histories.append(history)
+  return scores, histories
+
+#plot diagnostic learning curves
+def summarize_diagnostics(histories):
+  for i in range(len(histories)):
+    #plot loss
+    pyplot.subplot(211)
+    pyplot.title('Cross Entropy Loss')
+    pyplot.plot(histories[i].history['loss'], color='blue', label='train')
+    pyplot.plot(histories[i].history['val_loss'], color='orange', label='test')
+    #plot accuracy
+    pyplot.subplot(212)
+    pyplot.title('Classification Accuracy')
+    pyplot.plot(histories[i].history['acc'], color='blue', label='train')
+    pyplot.plot(histories[i].history['val_acc'], color='orange', label='test')
+pyplot.show()
+
+#summarize model performance
+def summarize_performance(scores):
+  #print summary
+  print('Accuracy: mean=%.3f std=%.3f, n=%d' % (mean(scores)*100, std(scores)*100, len(scores)))
+  #box and whisker plots of results
+  pyplot.boxplot(scores)
+  pyplot.show()
+
+#run the test harness for evaluating a model
+def run_test_harness():
+  #load dataset
+  trainX, trainY, testX, testY = load_dataset()
+  #prepare pixel data
+  trainX, testX = prep_pixels(trainX, testX)
+  #define model
+  model = define_model()
+  #evaluate model
+  scores, histories = evaluate_model(model, trainX, trainY)
+  #learning curves
+  summarize_diagnostics(histories)
+  #summarize estimated performance
+  summarize_performance(scores)
+
+#entry point, run the test harness
+run_test_harness()
+
+Results:
+> 90.417
+> 94.492
+> 97.600
+> 99.500
+> 99.950
+Accuracy: mean=96.392 std=3.552, n=5
+
+Running the example prints the classification accuracy for each fold of the cross-validation
+process. This is helpful to get an idea that the model evaluation is progressing. We can see that
+for each fold, the baseline model achieved an error rate below 10%, and in two cases 98% and
+99% accuracy. These are good results.
+
+Note: Your specific results may vary given the stochastic nature of the learning algorithm.
+Consider running the example a few times and compare the average performance.
+
+Next, the summary of the model performance is calculated. We can see in this case, the
+model has an estimated skill of about 96%, which is impressive, although it has a high standard
+deviation of about 3 percent.
+
+Next, a diagnostic plot is shown, giving insight into the learning behavior of the model across
+each fold. In this case, we can see that the model generally achieves a good fit, with train and
+test learning curves converging. There may be some signs of slight overfitting.
+
+Finally, a box and whisker plot is created to summarize the distribution of accuracy scores.
+
+As we would expect, the distribution spread across the mid- to high-nineties. We now have
+a robust test harness and a well-performing baseline model.

@@ -1,0 +1,56 @@
+The pre-trained model may be used as a standalone program to extract features from new
+photographs. Specifically, the extracted features of a photograph may be a vector of numbers
+that the model will use to describe the specific features in a photograph. These features can
+then be used as input in the development of a new model. The last few layers of the VGG16
+model are fully connected layers prior to the output layer. These layers will provide a complex
+set of features to describe a given input image and may provide useful input when training a
+new model for image classification or related computer vision task.
+
+The image can be loaded and prepared for the model, as we did before in the previous
+example. We will load the model with the classifier output part of the model, but manually
+remove the final output layer. This means that the second last fully connected layer with 4,096
+nodes will be the new output layer.
+
+This vector of 4,096 numbers will be used to represent the complex features of a given input
+image that can then be saved to file to be loaded later and used as input to train a new model.
+We can save it as a pickle file.
+
+#Using VGG16 model as feature extraction model
+from keras.preprocessing.image import load_img, img_to_array
+from keras.applications.vgg16 import preprocess_input, VGG16
+from keras.models import Model
+from pickle import dump
+
+#load image
+image = load_img('dog.jpg', target_size=(224, 224))
+
+#convert image pixels to numpy array
+image = img_to_array(image)
+
+#reshape data for model
+image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
+
+#prepare image for VGG model
+image = preprocess_input(image)
+
+#load model
+model = VGG16()
+
+#remove output layer
+model.layers.pop()
+model = Model(inputs=model.inputs, outputs=model.layers[-1].output)
+
+#get extracted features
+features = model.predict(image)
+print(features.shape)
+
+#save to file
+dump(features, open('dog.pkl', 'wb'))
+
+Results:
+(1, 4096)
+
+Running the example loads the photograph, then prepares the model as a feature extraction
+model. The features are extracted from the loaded photo and the shape of the feature vector is
+printed, showing it has 4,096 numbers. This feature vector is then saved to a new file dog.pkl
+in the current working directory. This process could be repeated for each photo in a new training dataset.

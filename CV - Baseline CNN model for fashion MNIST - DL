@@ -120,13 +120,12 @@ def run_test_harness():
 #entry point, run the test harness
 run_test_harness()
 
-Results:
-> 90.417
-> 94.492
-> 97.600
-> 99.500
-> 99.950
-Accuracy: mean=96.392 std=3.552, n=5
+> 91.233
+> 95.333
+> 98.567
+> 99.733
+> 99.975
+Accuracy: mean=96.968 std=3.311, n=5
 
 Running the example prints the classification accuracy for each fold of the cross-validation
 process. This is helpful to get an idea that the model evaluation is progressing. We can see that

@@ -1,0 +1,49 @@
+We can use our saved model to make a prediction on new images. The model assumes that new
+images are grayscale, they have been segmented so that one image contains one centered piece
+of clothing on a black background, and that the size of the image is square with the size 28×28
+pixels. Below is an image extracted from the MNIST test dataset.
+
+We will pretend this is an entirely new and unseen image, prepared in the required way, and
+see how we might use our saved model to predict the integer that the image represents. For
+this example, we expect class 2 for Pullover (also called a jumper). First, we can load the
+image, force it to be grayscale format, and force the size to be 28 × 28 pixels. The loaded image
+can then be resized to have a single channel and represent a single sample in a dataset. The
+load image() function implements this and will return the loaded image ready for classification.
+Importantly, the pixel values are prepared in the same way as the pixel values were prepared for
+the training dataset when fitting the final model, in this case, normalized.
+
+#Make a prediction for a new image
+from keras.preprocessing.image import load_img, img_to_array
+from keras.models import load_model
+
+#load and prepare the image
+def load_image(filename):
+  #load the image
+  img = load_img(filename, grayscale=True, target_size=(28, 28))
+  #convert to array
+  img = img_to_array(img)
+  #reshape into a single sample with 1 channel
+  img = img.reshape(1, 28, 28, 1)
+  #prepare pixel data
+  img = img.astype('float32')
+  img = img / 255.0
+  return img
+
+#load an image and predict the class
+def run_example():
+  #load the image
+  img = load_image('sample_image.png')
+  #load model
+  model = load_model('final_model.h5')
+  #predict the class
+  result = model.predict_classes(img)
+  print(result[0])
+
+#entry point, run the example
+run_example()
+
+Results:
+2
+
+Running the example first loads and prepares the image, loads the model, and then correctly
+predicts that the loaded image represents a pullover or class 2.

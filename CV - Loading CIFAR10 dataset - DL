@@ -1,0 +1,41 @@
+These are very small images, much smaller than a typical photograph, as the dataset was
+intended for computer vision research. CIFAR-10 is a well-understood dataset and widely used
+for benchmarking computer vision algorithms in the field of machine learning. The problem is
+solved. It is relatively straightforward to achieve 80% classification accuracy. Top performance
+on the problem is achieved by deep learning convolutional neural networks with a classification
+accuracy above 90% on the test dataset. The example below loads the CIFAR-10 dataset using
+the Keras API and creates a plot of the first nine images in the training dataset.
+
+#Loading CIFAR10 dataset
+import matplotlib.pyplot as plt
+from keras.datasets import cifar10
+
+#load dataset
+(trainX, trainY), (testX, testY) = cifar10.load_data()
+
+#summarize loaded dataset
+print('Train: X=%s, Y=%s' % (trainX.shape, trainY.shape))
+print('Test: X=%s, Y=%s' % (testX.shape, testY.shape))
+
+#plot first few images
+for i in range(9):
+  #define subplot
+  plt.subplot(330+1+i)
+  #plot raw pixel data
+  plt.imshow(trainX[i])
+#show figure
+plt.show()
+
+Results:
+Train: X=(50000, 32, 32, 3), Y=(50000, 1)
+Test: X=(10000, 32, 32, 3), Y=(10000, 1)
+
+Running the example loads the CIFAR-10 train and test dataset and prints their shape. We
+can see that there are 50,000 examples in the training dataset and 10,000 in the test dataset
+and that images are indeed square with 32 × 32 pixels and color, with three channels.
+
+A plot of the first nine images in the dataset is also created. It is clear that the images are
+indeed very small compared to modern photographs; it can be challenging to see what exactly
+is represented in some of the images given the extremely low resolution. This low resolution is
+likely the cause of the limited performance that top-of-the-line algorithms are able to achieve on
+the dataset.

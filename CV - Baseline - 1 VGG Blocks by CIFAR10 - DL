@@ -1,0 +1,118 @@
+We can now investigate a baseline model for the CIFAR-10 dataset. A baseline model will
+establish a minimum model performance to which all of our other models can be compared, as
+well as a model architecture that we can use as the basis of study and improvement. A good
+starting point is the general architectural principles of the VGG models. These are a good
+starting point because they achieved top performance in the ILSVRC 2014 competition and
+because the modular structure of the architecture is easy to understand and implement. For
+more details on the VGG model, see the 2015 paper Very Deep Convolutional Networks for
+Large-Scale Image Recognition.
+
+The architecture involves stacking convolutional layers with small 3 × 3 filters followed by
+a max pooling layer. Together, these layers form a block, and these blocks can be repeated
+where the number of filters in each block is increased with the depth of the network such as
+32, 64, 128, 256 for the first four blocks of the model. Padding is used on the convolutional
+layers to ensure the height and width of the output feature maps matches the inputs. We can
+explore this architecture on the CIFAR-10 problem and compare a model with this architecture
+with 1, 2, and 3 blocks. Each layer will use the ReLU activation function and the He weight
+initialization, which are generally best practices. For example, a 3-block VGG-style architecture
+can be defined in Keras as follows:
+
+#Baseline - 1 VGG Blocks by CIFAR10
+import sys
+from matplotlib import pyplot as plt
+from keras.datasets import cifar10
+from keras.utils import to_categorical
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
+from keras.optimizers import SGD
+
+#load train and test dataset
+def load_dataset():
+  #load dataset
+  (trainX, trainY), (testX, testY) = cifar10.load_data()
+  #one hot encode target values
+  trainY = to_categorical(trainY)
+  testY = to_categorical(testY)
+  return trainX, trainY, testX, testY
+
+#scale pixels
+def prep_pixels(train, test):
+  #convert from integers to floats
+  train_norm = train.astype('float32')
+  test_norm = test.astype('float32')
+  #normalize to range 0-1
+  train_norm = train_norm / 255.0
+  test_norm = test_norm / 255.0
+  #return normalized images
+  return train_norm, test_norm
+
+#define cnn model
+def define_model():
+  model = Sequential()
+  model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform', 
+                   padding='same', input_shape=(32, 32, 3)))
+  model.add(Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_uniform',
+                   padding='same'))
+  model.add(MaxPooling2D((2, 2)))
+  model.add(Flatten())
+  model.add(Dense(128, activation='relu', kernel_initializer='he_uniform'))
+  model.add(Dense(10, activation='softmax'))
+  #compile model
+  opt = SGD(lr=0.001, momentum=0.9)
+  model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+  return model
+
+#plot diagnostic learning curves
+def summarize_diagnostics(history):
+  #plot loss
+  plt.subplot(211)
+  plt.title('Cross Entropy Loss')
+  plt.plot(history.history['loss'], color='blue', label='train')
+  plt.plot(history.history['val_loss'], color='orange', label='test')
+  #plot accuracy
+  plt.subplot(212)
+  plt.title('Classification Accuracy')
+  plt.plot(history.history['acc'], color='blue', label='train')
+  plt.plot(history.history['val_acc'], color='orange', label='test')
+  #save plot to file
+  filename = sys.argv[0].split('/')[-1]
+  plt.savefig(filename + '_plot.png')
+  plt.close()
+
+#run the test harness for evaluating a model
+def run_test_harness():
+  #load dataset
+  trainX, trainY, testX, testY = load_dataset()
+  #prepare pixel data
+  trainX, testX = prep_pixels(trainX, testX)
+  #define model
+  model = define_model()
+  #fit model
+  history = model.fit(trainX, trainY, epochs=100, batch_size=64, validation_data=(testX, testY), verbose=0)
+  #evaluate model
+  _, acc = model.evaluate(testX, testY, verbose=0)
+  print('> %.3f' % (acc * 100.0))
+  #learning curves
+  summarize_diagnostics(history)
+
+#entry point, run the test harness
+run_test_harness()
+
+Results:
+> 67.010
+
+Running the model in the test harness first prints the classification accuracy on the test
+dataset.
+
+Note: Your specific results may vary given the stochastic nature of the learning algorithm.
+Consider running the example a few times and compare the average performance.
+
+In this case, we can see that the model achieved a classification accuracy of just less than
+70%.
+
+A figure is created and saved to file showing the learning curves of the model during training
+on the train and test dataset, both with regards to the loss and accuracy. In this case, we can
+see that the model rapidly overfits the test dataset. This is clear if we look at the plot of loss
+(top plot), we can see that the model’s performance on the training dataset (blue) continues
+to improve whereas the performance on the test dataset (orange) improves, then starts to get
+worse at around 15 epochs.

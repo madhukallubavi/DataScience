@@ -1,0 +1,50 @@
+We can use our saved model to make a prediction on new images. The model assumes that new
+images are color, they have been segmented so that one image contains one centered object,
+and the size of the image is square with the size 32 × 32 pixels. Below is an image extracted
+from the CIFAR-10 test dataset.
+
+We will pretend this is an entirely new and unseen image, prepared in the required way, and
+see how we might use our saved model to predict the integer that the image represents. For this
+example, we expect class 4 for Deer. First, we can load the image and force it to the size to be
+32 × 32 pixels. The loaded image can then be resized to have a single channel and represent
+a single sample in a dataset. The load image() function implements this and will return the
+loaded image ready for classification. Importantly, the pixel values are prepared in the same
+way as the pixel values were prepared for the training dataset when fitting the final model, in
+this case, normalized.
+
+#Make prediction for new image
+from keras.preprocessing.image import load_img
+from keras.preprocessing.image import img_to_array
+from keras.models import load_model
+
+#load and prepare image
+def load_image(filename):
+  #load image
+  img = load_img(filename, target_size=(32, 32))
+  #convert to array
+  img = img_to_array(img)
+  #reshape into a single sample with 3 channels
+  img = img.reshape(1, 32, 32, 3)
+  #prepare pixel data
+  img = img.astype('float32')
+  img = img/255.0
+  return img
+
+#load an image and predict the class
+def run_example():
+  #load image
+  img = load_image('sample_images.png')
+  #load model
+  model = load_model('final_model.h5')
+  #predict the class
+  result = model.predict_classes(img)
+  print(result[0])
+
+#entry point, run the example
+run_example()
+
+Results
+4
+
+Running the example first loads and prepares the image, loads the model, and then correctly
+predicts that the loaded image represents a deer or class 4.
